@@ -1,0 +1,2176 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin — Hotel Cantarranas</title>
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant:wght@400;500;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet" />
+
+  <!-- Tailwind CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            forest:       '#000A1C',
+            'forest-mid': '#001A2C',
+            gold:         '#c9a84c',
+            'gold-light': '#e0c078',
+            ivory:        '#f9f5ef',
+            'ivory-dark': '#ede8df',
+          },
+          fontFamily: {
+            serif: ['Cormorant', 'Georgia', 'serif'],
+            sans:  ['Inter', 'system-ui', 'sans-serif'],
+          },
+        }
+      }
+    }
+  </script>
+
+  <!-- Alpine.js -->
+  <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+
+  <style>
+    body { font-family: 'Inter', system-ui, sans-serif; background: #f9f5ef; color: #1a3a2a; }
+    .badge-pendiente  { background:#fef3c7; color:#92400e; border:1px solid #fcd34d; }
+    .badge-confirmada { background:#d1fae5; color:#065f46; border:1px solid #6ee7b7; }
+    .badge-cancelada  { background:#fee2e2; color:#991b1b; border:1px solid #fca5a5; }
+    .sidebar-link { transition: all 0.2s; color: #000A1C; opacity: 0.6; font-weight: 500; }
+    .sidebar-link:hover { background: rgba(0,10,28,0.05); opacity: 1; }
+    .sidebar-link.active { background: #000A1C !important; color: #fff !important; opacity: 1 !important; font-weight: 600; box-shadow: 0 4px 12px rgba(0,10,28,0.2); }
+    @keyframes fadeIn { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
+    .fade-in { animation: fadeIn 0.3s ease; }
+    .stat-card { border: 1px solid rgba(0,10,28,0.05); transition: transform 0.2s, box-shadow 0.2s; background: white; }
+    .stat-card:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,10,28,0.08); }
+
+    /* Login */
+    .login-bg {
+      background: #f9f5ef;
+      background-image: 
+      radial-gradient(circle at 10% 20%, rgba(0,10,28,0.03) 0%, transparent 40%),
+      radial-gradient(circle at 90% 80%, rgba(0,10,28,0.03) 0%, transparent 40%);
+    }
+    .login-card { 
+      background: white;
+      box-shadow: 0 20px 50px rgba(0,10,28,0.08);
+      border: 1px solid rgba(0,10,28,0.05);
+      animation: loginIn 0.5s cubic-bezier(0.16,1,0.3,1) both; 
+    }
+    .login-input {
+      background: #fdfcfb;
+      border: 1px solid rgba(0,10,28,0.1);
+      color: #000A1C;
+      transition: all 0.2s;
+    }
+    .login-input::placeholder { color: rgba(0,10,28,0.3); }
+    .login-input:focus { outline: none; border-color: #000A1C; background: white; box-shadow: 0 0 0 4px rgba(0,10,28,0.05); }
+    .login-input.error { border-color: rgba(239,68,68,0.6); }
+    @keyframes shake {
+      0%,100% { transform: translateX(0); }
+      20%,60%  { transform: translateX(-6px); }
+      40%,80%  { transform: translateX(6px); }
+    }
+    .shake { animation: shake 0.4s ease; }
+  </style>
+</head>
+
+<body class="min-h-screen bg-ivory" x-data="adminApp()" x-init="init()">
+
+  <!-- ── LOGIN SCREEN ────────────────────────────────────── -->
+  <div x-show="!autenticado" x-transition:leave="transition duration-300" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0"
+       class="login-bg fixed inset-0 z-[100] flex items-center justify-center px-4">
+
+    <!-- Decorative lines -->
+    <div class="absolute inset-0 overflow-hidden pointer-events-none">
+      <div class="absolute top-0 left-1/2 -translate-x-1/2 w-px h-32 bg-gradient-to-b from-transparent to-gold/20"></div>
+      <div class="absolute bottom-0 left-1/2 -translate-x-1/2 w-px h-32 bg-gradient-to-t from-transparent to-gold/20"></div>
+    </div>
+
+    <div class="login-card w-full max-w-sm rounded-[2rem] p-10 bg-white">
+      <!-- Logo -->
+      <div class="text-center mb-8">
+        <img src="Imágenes/Logo Cantarranas.png" alt="Cantarranas"
+             class="h-16 w-16 object-contain mx-auto mb-5"
+             onerror="this.style.display='none'" />
+        <h1 class="font-serif text-3xl text-forest mb-1 font-semibold">Cantarranas</h1>
+        <p class="text-forest/30 text-[10px] tracking-[0.25em] uppercase font-light">Acceso Reservado</p>
+      </div>
+
+      <!-- Form -->
+      <form @submit.prevent="login()" class="space-y-6">
+        <!-- Usuario -->
+        <div class="flex flex-col gap-2">
+          <label class="text-forest/50 text-[10px] tracking-widest uppercase font-semibold ml-1">Usuario</label>
+          <div class="relative">
+            <svg class="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-forest/20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+            <input x-model="loginUser" type="text" placeholder="admin"
+                   :class="loginError ? 'shake border-red-200' : ''"
+                   class="login-input w-full pl-12 pr-4 py-4 text-sm rounded-2xl" />
+          </div>
+        </div>
+
+        <!-- Contraseña -->
+        <div class="flex flex-col gap-2">
+          <label class="text-forest/50 text-[10px] tracking-widest uppercase font-semibold ml-1">Contraseña</label>
+          <div class="relative">
+            <svg class="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-forest/20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+            <input x-model="loginPass" :type="showPass ? 'text' : 'password'" placeholder="••••••••"
+                   :class="loginError ? 'shake border-red-200' : ''"
+                   class="login-input w-full pl-12 pr-12 py-4 text-sm rounded-2xl" />
+            <button type="button" @click="showPass = !showPass"
+                    class="absolute right-4 top-1/2 -translate-y-1/2 text-forest/20 hover:text-forest/40 transition-colors cursor-pointer">
+              <svg x-show="!showPass" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+              <svg x-show="showPass" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"/></svg>
+            </button>
+          </div>
+        </div>
+
+        <!-- Error -->
+        <p x-show="loginError" x-transition class="text-red-600 text-[10px] text-center uppercase tracking-widest font-bold" x-text="loginError"></p>
+
+        <button type="submit" :disabled="loading"
+                class="w-full bg-forest hover:bg-forest-mid text-white font-bold py-4 rounded-2xl shadow-lg shadow-forest/10 transition-all duration-300 transform active:scale-[0.98] mt-2 flex items-center justify-center gap-2">
+          <span x-show="!loading">Ingresar</span>
+          <svg x-show="loading" class="animate-spin h-5 w-5 text-white" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- ── PANEL (solo visible autenticado) ──────────────────── -->
+  <div x-show="autenticado" x-transition:enter="transition duration-300" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100">
+
+  <!-- Mobile top bar -->
+  <div class="lg:hidden flex items-center justify-between bg-white px-4 py-3 sticky top-0 z-50 border-b border-forest/5">
+    <div class="flex items-center gap-2">
+      <img src="Imágenes/Logo Cantarranas.png" alt="Logo" class="h-8 w-8 object-contain" onerror="this.style.display='none'" />
+      <span class="text-forest font-serif text-lg">Cantarranas Admin</span>
+    </div>
+    <button @click="sidebarOpen = !sidebarOpen" class="text-forest cursor-pointer p-1">
+      <svg x-show="!sidebarOpen" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+      <svg x-show="sidebarOpen" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+    </button>
+  </div>
+
+  <div class="flex min-h-screen">
+
+    <!-- ── SIDEBAR ────────────────────────────────────────── -->
+    <aside class="fixed lg:static inset-y-0 left-0 z-40 w-64 bg-white border-r border-forest/10 flex flex-col
+                  transform transition-transform duration-300 lg:translate-x-0"
+           :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full'">
+
+      <!-- Logo -->
+      <div class="hidden lg:flex items-center gap-3 px-6 py-6 border-b border-forest/5">
+        <img src="Imágenes/Logo Cantarranas.png" alt="Logo" class="h-10 w-10 object-contain" onerror="this.style.display='none'" />
+        <div>
+          <div class="text-forest font-serif text-lg leading-tight">Cantarranas</div>
+          <div class="text-forest/40 text-[10px] tracking-[0.2em] uppercase font-light">Panel Admin</div>
+        </div>
+      </div>
+
+      <!-- Nav -->
+      <nav class="flex-1 py-6 px-3 space-y-1">
+        <button @click="view='dashboard'; sidebarOpen=false"
+                :class="view==='dashboard' ? 'active' : ''"
+                class="sidebar-link w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm cursor-pointer">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+          Dashboard
+        </button>
+        <button @click="view='reservas'; sidebarOpen=false; loadReservas()"
+                :class="view==='reservas' ? 'active' : ''"
+                class="sidebar-link w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm cursor-pointer">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+          Reservas
+          <span x-show="pendientesCount > 0"
+                class="ml-auto bg-forest text-white text-[10px] font-bold px-2 py-0.5 rounded-full"
+                x-text="pendientesCount"></span>
+        </button>
+        <button @click="view='calendario'; sidebarOpen=false"
+                :class="view==='calendario' ? 'active' : ''"
+                class="sidebar-link w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm cursor-pointer">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+          Calendario
+        </button>
+        <button @click="view='habitaciones'; sidebarOpen=false"
+                :class="view==='habitaciones' ? 'active' : ''"
+                class="sidebar-link w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm cursor-pointer">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"/></svg>
+          Habitaciones
+        </button>
+        <button @click="view='finanzas'; sidebarOpen=false"
+                :class="view==='finanzas' ? 'active' : ''"
+                class="sidebar-link w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm cursor-pointer">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+          Finanzas
+        </button>
+        <button @click="view='editar-hab'; sidebarOpen=false"
+                :class="view==='editar-hab' ? 'active' : ''"
+                class="sidebar-link w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm cursor-pointer">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+          Editar habitaciones
+        </button>
+      </nav>
+
+      <!-- Footer sidebar -->
+      <div class="px-6 py-4 border-t border-forest/5 space-y-2">
+        <a href="index.html" class="text-forest/40 text-[11px] hover:text-gold transition-colors flex items-center gap-2">
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+          Ver sitio web
+        </a>
+        <button @click="cerrarSesion()" class="text-forest/40 text-[11px] hover:text-red-600 transition-colors flex items-center gap-2 cursor-pointer">
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
+          Cerrar sesión
+        </button>
+      </div>
+    </aside>
+
+    <!-- Sidebar overlay (mobile) -->
+    <div x-show="sidebarOpen" @click="sidebarOpen=false"
+         class="fixed inset-0 bg-black/50 z-30 lg:hidden" x-transition:enter="transition-opacity duration-200"
+         x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"></div>
+
+    <!-- ── MAIN CONTENT ──────────────────────────────────── -->
+    <main class="flex-1 lg:ml-0 p-4 md:p-6 lg:p-8 overflow-x-hidden">
+
+      <!-- Loading overlay -->
+      <div x-show="loading" class="fixed inset-0 bg-white/60 z-50 flex items-center justify-center">
+        <div class="flex flex-col items-center gap-3">
+          <div class="w-10 h-10 border-2 border-forest border-t-gold rounded-full animate-spin"></div>
+          <span class="text-forest/60 text-sm">Cargando...</span>
+        </div>
+      </div>
+
+      <!-- Error banner -->
+      <div x-show="serverError" x-transition
+           class="mb-6 bg-red-50 border border-red-200 text-red-700 rounded-xl px-4 py-3 text-sm flex items-center gap-2">
+        <svg class="w-4 h-4 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/></svg>
+        No se puede conectar al servidor. Asegúrate de que <code class="bg-red-100 px-1 rounded">node server.js</code> esté corriendo en el puerto 3001.
+      </div>
+
+      <!-- ── DASHBOARD VIEW ────────────────────────── -->
+      <div x-show="view==='dashboard'" class="fade-in" x-init="$watch('reservas', () => renderCharts())">
+
+        <!-- Header -->
+        <div class="mb-8 flex items-center justify-between">
+          <div>
+            <h1 class="font-serif text-3xl text-forest">Dashboard</h1>
+            <p class="text-forest/50 text-sm mt-1" x-text="'Actualizado: ' + new Date().toLocaleDateString('es-MX',{weekday:'long',day:'numeric',month:'long'})"></p>
+          </div>
+          <button @click="loadReservas()" class="flex items-center gap-2 text-forest/40 hover:text-gold text-xs transition-colors cursor-pointer">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+            Actualizar
+          </button>
+        </div>
+
+        <!-- ── KPI Cards ── -->
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+
+          <!-- Total reservas -->
+          <div class="stat-card bg-white rounded-2xl p-5 shadow-sm flex flex-col gap-3">
+            <div class="flex items-start justify-between">
+              <div>
+                <div class="text-forest/40 text-xs uppercase tracking-widest mb-1">Total reservas</div>
+                <div class="text-3xl font-serif text-forest" x-text="reservas.length">—</div>
+              </div>
+              <div class="w-10 h-10 rounded-xl bg-forest/8 flex items-center justify-center">
+                <svg class="w-5 h-5 text-forest/50" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+              </div>
+            </div>
+            <!-- Mini bar sparkline -->
+            <div class="flex items-end gap-0.5 h-8">
+              <template x-for="val in estadosBars()" :key="val.label">
+                <div class="flex-1 rounded-sm transition-all duration-500" :style="`height:${val.pct}%; background:${val.color}; opacity:0.7`" :title="val.label+': '+val.n"></div>
+              </template>
+            </div>
+            <div class="flex gap-3 text-xs text-forest/40">
+              <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-sm bg-amber-400 inline-block"></span>Pendientes</span>
+              <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-sm bg-emerald-500 inline-block"></span>Confirmadas</span>
+              <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-sm bg-red-400 inline-block"></span>Canceladas</span>
+            </div>
+          </div>
+
+          <!-- Pendientes -->
+          <div class="stat-card bg-white rounded-2xl p-5 shadow-sm flex flex-col gap-2">
+            <div class="flex items-start justify-between">
+              <div>
+                <div class="text-forest/40 text-xs uppercase tracking-widest mb-1">Pendientes</div>
+                <div class="text-3xl font-serif text-amber-600" x-text="pendientesCount">—</div>
+              </div>
+              <div class="w-10 h-10 rounded-xl bg-amber-50 flex items-center justify-center">
+                <svg class="w-5 h-5 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+              </div>
+            </div>
+            <!-- Donut mini -->
+            <div class="flex items-center gap-3 mt-1">
+              <svg viewBox="0 0 36 36" class="w-14 h-14 flex-shrink-0 -rotate-90">
+                <circle cx="18" cy="18" r="14" fill="none" stroke="#f3f4f6" stroke-width="4"/>
+                <circle cx="18" cy="18" r="14" fill="none" stroke="#f59e0b" stroke-width="4"
+                  :stroke-dasharray="`${reservas.length ? (pendientesCount/reservas.length*87.96).toFixed(1) : 0} 87.96`"
+                  stroke-linecap="round" style="transition:stroke-dasharray 0.6s ease"/>
+              </svg>
+              <div class="text-xs text-forest/50 leading-relaxed">
+                <div x-text="`${reservas.length ? Math.round(pendientesCount/reservas.length*100) : 0}% del total`"></div>
+                <div class="text-forest/30">necesitan acción</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Confirmadas -->
+          <div class="stat-card bg-white rounded-2xl p-5 shadow-sm flex flex-col gap-2">
+            <div class="flex items-start justify-between">
+              <div>
+                <div class="text-forest/40 text-xs uppercase tracking-widest mb-1">Confirmadas</div>
+                <div class="text-3xl font-serif text-emerald-700" x-text="reservas.filter(r=>r.estado==='confirmada').length">—</div>
+              </div>
+              <div class="w-10 h-10 rounded-xl bg-emerald-50 flex items-center justify-center">
+                <svg class="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+              </div>
+            </div>
+            <div class="flex items-center gap-3 mt-1">
+              <svg viewBox="0 0 36 36" class="w-14 h-14 flex-shrink-0 -rotate-90">
+                <circle cx="18" cy="18" r="14" fill="none" stroke="#f3f4f6" stroke-width="4"/>
+                <circle cx="18" cy="18" r="14" fill="none" stroke="#10b981" stroke-width="4"
+                  :stroke-dasharray="`${reservas.length ? (reservas.filter(r=>r.estado==='confirmada').length/reservas.length*87.96).toFixed(1) : 0} 87.96`"
+                  stroke-linecap="round" style="transition:stroke-dasharray 0.6s ease"/>
+              </svg>
+              <div class="text-xs text-forest/50 leading-relaxed">
+                <div x-text="`${reservas.length ? Math.round(reservas.filter(r=>r.estado==='confirmada').length/reservas.length*100) : 0}% del total`"></div>
+                <div class="text-forest/30">tasa de confirmación</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Ingresos -->
+          <div class="stat-card bg-forest rounded-2xl p-5 shadow-sm flex flex-col gap-2 text-white">
+            <div class="flex items-start justify-between">
+              <div>
+                <div class="text-white/40 text-xs uppercase tracking-widest mb-1">Ingresos totales</div>
+                <div class="text-2xl font-serif text-gold" x-text="totalIngresos">—</div>
+              </div>
+              <div class="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center">
+                <svg class="w-5 h-5 text-gold/70" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+              </div>
+            </div>
+            <div class="text-white/30 text-xs mt-1">Solo reservas confirmadas</div>
+            <!-- Avg por noche -->
+            <div class="bg-white/8 rounded-xl px-3 py-2 mt-auto">
+              <div class="text-white/40 text-xs mb-0.5">Promedio por reserva</div>
+              <div class="text-gold font-serif text-base" x-text="avgIngreso()"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── Fila 2: Gráfica de barras por tipo + Ocupación ── -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
+
+          <!-- Reservas por tipo de habitación (barras horizontales) -->
+          <div class="bg-white rounded-2xl p-6 shadow-sm">
+            <h3 class="font-serif text-base text-forest mb-1">Reservas por tipo</h3>
+            <p class="text-forest/40 text-xs mb-5">Distribución entre todos los estados</p>
+            <div class="space-y-3">
+              <template x-for="t in tipoStats()" :key="t.tipo">
+                <div>
+                  <div class="flex justify-between items-center mb-1">
+                    <span class="text-xs text-forest/70 font-medium" x-text="t.tipo"></span>
+                    <span class="text-xs text-forest/40" x-text="t.n + ' reserva' + (t.n!==1?'s':'')"></span>
+                  </div>
+                  <div class="h-2 bg-ivory-dark rounded-full overflow-hidden">
+                    <div class="h-full rounded-full bg-gold transition-all duration-700"
+                         :style="`width:${t.pct}%`"></div>
+                  </div>
+                </div>
+              </template>
+              <div x-show="tipoStats().length===0" class="text-forest/30 text-xs py-4 text-center">Sin datos</div>
+            </div>
+          </div>
+
+          <!-- Ocupación próximos 14 días (heatmap de celdas) -->
+          <div class="bg-white rounded-2xl p-6 shadow-sm">
+            <h3 class="font-serif text-base text-forest mb-1">Ocupación próximos 14 días</h3>
+            <p class="text-forest/40 text-xs mb-4">Noches con habitaciones reservadas</p>
+            <div class="grid grid-cols-7 gap-1.5">
+              <!-- Cabeceras días semana -->
+              <template x-for="d in ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb']">
+                <div class="text-center text-forest/30 text-xs pb-1" x-text="d"></div>
+              </template>
+              <!-- Celdas 14 días + padding inicial -->
+              <template x-for="cell in ocupacion14()" :key="cell.iso">
+                <div :title="cell.iso + ': ' + cell.n + ' hab.'"
+                     class="aspect-square rounded-lg flex flex-col items-center justify-center cursor-default transition-all"
+                     :class="cell.empty ? 'opacity-0 pointer-events-none' : cell.n === 0 ? 'bg-ivory-dark' : cell.n <= 2 ? 'bg-gold/30' : cell.n <= 4 ? 'bg-gold/60' : 'bg-gold'">
+                  <span class="text-xs font-medium leading-none"
+                        :class="cell.n >= 3 ? 'text-forest' : 'text-forest/60'"
+                        x-show="!cell.empty" x-text="cell.day"></span>
+                  <span class="text-xs leading-none mt-0.5"
+                        :class="cell.n >= 3 ? 'text-forest/70' : 'text-forest/30'"
+                        x-show="!cell.empty && cell.n > 0" x-text="cell.n+'h'"></span>
+                </div>
+              </template>
+            </div>
+            <div class="flex items-center gap-3 mt-4 text-xs text-forest/40">
+              <span class="flex items-center gap-1"><span class="w-3 h-3 rounded bg-ivory-dark inline-block"></span>Libre</span>
+              <span class="flex items-center gap-1"><span class="w-3 h-3 rounded bg-gold/40 inline-block"></span>1–2 hab.</span>
+              <span class="flex items-center gap-1"><span class="w-3 h-3 rounded bg-gold inline-block"></span>3+ hab.</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── Fila 3: Alertas pendientes + Timeline próximas reservas ── -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
+
+          <!-- Pendientes de acción -->
+          <div x-show="pendientesCount > 0" class="bg-amber-50 border border-amber-200 rounded-2xl p-5">
+            <div class="flex items-center gap-2 mb-3">
+              <svg class="w-5 h-5 text-amber-500" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/></svg>
+              <span class="font-medium text-amber-800 text-sm" x-text="`${pendientesCount} reserva(s) pendiente(s) de confirmar`"></span>
+            </div>
+            <template x-for="r in reservas.filter(r=>r.estado==='pendiente')" :key="r.id">
+              <div class="flex flex-wrap items-center justify-between gap-2 py-2.5 border-t border-amber-100">
+                <div class="text-sm">
+                  <span class="font-medium text-forest" x-text="r.nombre"></span>
+                  <span class="text-forest/50"> · </span>
+                  <span class="text-forest/60 text-xs" x-text="r.habitacion_nombre"></span>
+                  <br/>
+                  <span class="text-forest/40 text-xs" x-text="r.checkin + ' → ' + r.checkout"></span>
+                </div>
+                <div class="flex gap-2">
+                  <button @click="cambiarEstado(r.id,'confirmada')"
+                          class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs px-3 py-1.5 rounded-lg cursor-pointer transition-colors">Confirmar</button>
+                  <button @click="cambiarEstado(r.id,'cancelada')"
+                          class="bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 text-xs px-3 py-1.5 rounded-lg cursor-pointer transition-colors">Cancelar</button>
+                </div>
+              </div>
+            </template>
+          </div>
+          <div x-show="pendientesCount === 0" class="bg-emerald-50 border border-emerald-200 rounded-2xl p-5 flex items-center gap-3">
+            <div class="w-10 h-10 rounded-full bg-emerald-100 flex items-center justify-center flex-shrink-0">
+              <svg class="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+            </div>
+            <div>
+              <div class="text-emerald-800 font-medium text-sm">Todo al día</div>
+              <div class="text-emerald-600/60 text-xs">No hay reservas pendientes de confirmar.</div>
+            </div>
+          </div>
+
+          <!-- Timeline próximas reservas -->
+          <div class="bg-white rounded-2xl p-6 shadow-sm">
+            <h3 class="font-serif text-base text-forest mb-1">Próximos check-ins</h3>
+            <p class="text-forest/40 text-xs mb-4">Huéspedes confirmados o pendientes</p>
+            <div class="space-y-3 max-h-52 overflow-y-auto pr-1">
+              <template x-for="r in proximosCheckins()" :key="r.id">
+                <div class="flex items-start gap-3">
+                  <!-- Fecha pill -->
+                  <div class="flex-shrink-0 bg-ivory-dark rounded-xl w-12 text-center py-1.5">
+                    <div class="text-gold text-xs font-semibold leading-none" x-text="r.checkin.slice(8)"></div>
+                    <div class="text-forest/40 text-xs leading-none mt-0.5" x-text="['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'][parseInt(r.checkin.slice(5,7))-1]"></div>
+                  </div>
+                  <div class="flex-1 min-w-0">
+                    <div class="flex items-center gap-2">
+                      <span class="font-medium text-forest text-sm truncate" x-text="r.nombre"></span>
+                      <span :class="'badge-'+r.estado" class="text-xs px-1.5 py-0.5 rounded-full font-medium flex-shrink-0" x-text="r.estado"></span>
+                    </div>
+                    <div class="text-forest/40 text-xs truncate" x-text="r.habitacion_nombre + ' · ' + (r.noches ?? Math.round((new Date(r.checkout)-new Date(r.checkin))/86400000)) + ' noche(s)'"></div>
+                  </div>
+                  <div class="text-forest/60 text-xs font-medium flex-shrink-0" x-text="'$'+(r.total||0).toLocaleString('es-MX')"></div>
+                </div>
+              </template>
+              <div x-show="proximosCheckins().length===0" class="text-forest/30 text-xs text-center py-4">No hay check-ins próximos.</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── Fila 4: Últimas reservas ── -->
+        <div class="bg-white rounded-2xl shadow-sm overflow-hidden">
+          <div class="px-6 py-4 border-b border-ivory-dark flex items-center justify-between">
+            <h2 class="font-serif text-lg text-forest">Últimas reservas</h2>
+            <button @click="view='reservas'; loadReservas()"
+                    class="text-gold text-xs uppercase tracking-widest hover:text-gold-light transition-colors cursor-pointer">Ver todas</button>
+          </div>
+          <div class="divide-y divide-ivory-dark">
+            <template x-for="r in reservas.slice(0,5)" :key="r.id">
+              <div class="px-6 py-4 flex flex-wrap items-center gap-3">
+                <div class="flex-1 min-w-0">
+                  <div class="font-medium text-forest text-sm" x-text="r.nombre"></div>
+                  <div class="text-forest/50 text-xs" x-text="r.habitacion_nombre + ' · ' + r.checkin + ' → ' + r.checkout"></div>
+                </div>
+                <span :class="'badge-'+r.estado" class="text-xs px-2 py-1 rounded-full font-medium" x-text="r.estado"></span>
+                <div class="text-forest font-medium text-sm" x-text="'$'+r.total?.toLocaleString('es-MX')"></div>
+              </div>
+            </template>
+            <div x-show="reservas.length === 0" class="px-6 py-8 text-center text-forest/40 text-sm">
+              No hay reservas registradas.
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── RESERVAS VIEW ─────────────────────────── -->
+      <div x-show="view==='reservas'" class="fade-in">
+        <div class="mb-8 flex flex-wrap items-center justify-between gap-4">
+          <div>
+            <h1 class="font-serif text-3xl text-forest">Reservas</h1>
+            <p class="text-forest/50 text-sm mt-1" x-text="`${filtradas.length} de ${reservas.length} reservas`"></p>
+          </div>
+          <button @click="loadReservas()"
+                  class="flex items-center gap-2 bg-forest text-white text-sm px-4 py-2 rounded-xl hover:bg-forest-mid transition-colors cursor-pointer">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+            Actualizar
+          </button>
+        </div>
+
+        <!-- Filters -->
+        <div class="bg-white rounded-2xl p-4 shadow-sm mb-6 flex flex-wrap gap-3">
+          <input x-model="search" type="text" placeholder="Buscar por nombre o habitación..."
+                 class="flex-1 min-w-48 border border-ivory-dark rounded-xl px-4 py-2 text-sm text-forest focus:outline-none focus:ring-2 focus:ring-gold/30" />
+          <select x-model="filtroEstado"
+                  class="border border-ivory-dark rounded-xl px-4 py-2 text-sm text-forest bg-white cursor-pointer focus:outline-none focus:ring-2 focus:ring-gold/30">
+            <option value="">Todos los estados</option>
+            <option value="pendiente">Pendientes</option>
+            <option value="confirmada">Confirmadas</option>
+            <option value="cancelada">Canceladas</option>
+          </select>
+        </div>
+
+        <!-- Table (desktop) -->
+        <div class="hidden md:block bg-white rounded-2xl shadow-sm overflow-hidden">
+          <table class="w-full text-sm">
+            <thead>
+              <tr class="bg-ivory-dark text-forest/60 text-xs uppercase tracking-widest">
+                <th class="text-left px-5 py-3">Huésped</th>
+                <th class="text-left px-5 py-3">Habitación</th>
+                <th class="text-left px-5 py-3">Fechas</th>
+                <th class="text-left px-5 py-3">Noches</th>
+                <th class="text-left px-5 py-3">Total</th>
+                <th class="text-left px-5 py-3">Estado</th>
+                <th class="text-left px-5 py-3">Acciones</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-ivory-dark">
+              <template x-for="r in filtradas" :key="r.id">
+                <tr class="hover:bg-ivory/60 transition-colors">
+                  <td class="px-5 py-4">
+                    <div class="font-medium text-forest" x-text="r.nombre"></div>
+                    <div class="text-forest/40 text-xs" x-text="r.telefono"></div>
+                    <div class="text-forest/40 text-xs" x-text="r.email"></div>
+                  </td>
+                  <td class="px-5 py-4">
+                    <div x-text="r.habitacion_nombre"></div>
+                    <div class="text-forest/40 text-xs" x-text="r.huespedes + ' huésped(es)'"></div>
+                  </td>
+                  <td class="px-5 py-4 text-forest/70">
+                    <div x-text="r.checkin"></div>
+                    <div class="text-forest/40">→ <span x-text="r.checkout"></span></div>
+                  </td>
+                  <td class="px-5 py-4 text-center text-forest/70" x-text="r.noches ?? calcNoches(r)"></td>
+                  <td class="px-5 py-4 font-medium text-forest" x-text="r.total ? '$'+r.total.toLocaleString('es-MX') : '—'"></td>
+                  <td class="px-5 py-4">
+                    <span :class="'badge-'+r.estado" class="text-xs px-2.5 py-1 rounded-full font-medium" x-text="r.estado"></span>
+                  </td>
+                  <td class="px-5 py-4">
+                    <div class="flex items-center gap-1">
+                      <!-- Confirm -->
+                      <button x-show="r.estado !== 'confirmada'"
+                              @click="cambiarEstado(r.id,'confirmada')"
+                              title="Confirmar"
+                              class="w-8 h-8 flex items-center justify-center rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-700 transition-colors cursor-pointer">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                      </button>
+                      <!-- Pending -->
+                      <button x-show="r.estado !== 'pendiente'"
+                              @click="cambiarEstado(r.id,'pendiente')"
+                              title="Marcar pendiente"
+                              class="w-8 h-8 flex items-center justify-center rounded-lg bg-amber-50 hover:bg-amber-100 text-amber-700 transition-colors cursor-pointer">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                      </button>
+                      <!-- Cancel -->
+                      <button x-show="r.estado !== 'cancelada'"
+                              @click="cambiarEstado(r.id,'cancelada')"
+                              title="Cancelar"
+                              class="w-8 h-8 flex items-center justify-center rounded-lg bg-red-50 hover:bg-red-100 text-red-600 transition-colors cursor-pointer">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                      </button>
+                      <!-- Delete -->
+                      <button @click="eliminarReserva(r.id)"
+                              title="Eliminar"
+                              class="w-8 h-8 flex items-center justify-center rounded-lg bg-gray-50 hover:bg-gray-100 text-gray-500 transition-colors cursor-pointer">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                      </button>
+                    </div>
+                    <!-- Notes -->
+                    <div x-show="r.notas" class="text-forest/40 text-xs mt-1 max-w-40 truncate" :title="r.notas" x-text="r.notas"></div>
+                  </td>
+                </tr>
+              </template>
+              <tr x-show="filtradas.length === 0">
+                <td colspan="7" class="text-center py-12 text-forest/40">No se encontraron reservas.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Cards (mobile) -->
+        <div class="md:hidden space-y-4">
+          <template x-for="r in filtradas" :key="r.id">
+            <div class="bg-white rounded-2xl shadow-sm p-5">
+              <div class="flex items-start justify-between mb-3">
+                <div>
+                  <div class="font-medium text-forest" x-text="r.nombre"></div>
+                  <div class="text-forest/50 text-xs" x-text="r.telefono"></div>
+                </div>
+                <span :class="'badge-'+r.estado" class="text-xs px-2.5 py-1 rounded-full font-medium" x-text="r.estado"></span>
+              </div>
+              <div class="text-sm text-forest/70 mb-1" x-text="r.habitacion_nombre"></div>
+              <div class="text-xs text-forest/50 mb-3" x-text="r.checkin + ' → ' + r.checkout + ' · ' + (r.noches ?? calcNoches(r)) + ' noches'"></div>
+              <div class="text-forest font-medium text-sm mb-4" x-text="r.total ? '$'+r.total.toLocaleString('es-MX') : '—'"></div>
+              <div x-show="r.notas" class="text-xs text-forest/40 italic mb-3" x-text="'Nota: ' + r.notas"></div>
+              <div class="flex gap-2 flex-wrap">
+                <button x-show="r.estado !== 'confirmada'"
+                        @click="cambiarEstado(r.id,'confirmada')"
+                        class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs px-3 py-1.5 rounded-lg cursor-pointer transition-colors">
+                  Confirmar
+                </button>
+                <button x-show="r.estado !== 'pendiente'"
+                        @click="cambiarEstado(r.id,'pendiente')"
+                        class="bg-amber-100 hover:bg-amber-200 text-amber-800 text-xs px-3 py-1.5 rounded-lg cursor-pointer transition-colors">
+                  Pendiente
+                </button>
+                <button x-show="r.estado !== 'cancelada'"
+                        @click="cambiarEstado(r.id,'cancelada')"
+                        class="bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 text-xs px-3 py-1.5 rounded-lg cursor-pointer transition-colors">
+                  Cancelar
+                </button>
+                <button @click="eliminarReserva(r.id)"
+                        class="bg-gray-100 hover:bg-gray-200 text-gray-500 text-xs px-3 py-1.5 rounded-lg cursor-pointer transition-colors">
+                  Eliminar
+                </button>
+              </div>
+            </div>
+          </template>
+          <div x-show="filtradas.length === 0" class="text-center py-12 text-forest/40 text-sm">
+            No se encontraron reservas.
+          </div>
+        </div>
+      </div>
+
+      <!-- ── HABITACIONES VIEW ─────────────────────── -->
+      <div x-show="view==='habitaciones'" class="fade-in">
+        <div class="mb-6 flex items-center justify-between">
+          <div>
+            <h1 class="font-serif text-3xl text-forest">Habitaciones</h1>
+            <p class="text-forest/50 text-sm mt-1" x-text="habitaciones.length + ' habitaciones · ' + habitacionesOcupadasHoy() + ' ocupadas hoy'"></p>
+          </div>
+          <!-- Leyenda estados -->
+          <div class="hidden md:flex items-center gap-4 text-xs text-forest/50">
+            <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-emerald-500 inline-block"></span>Ocupada hoy</span>
+            <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-amber-400 inline-block"></span>Próxima reserva</span>
+            <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-forest/20 inline-block"></span>Disponible</span>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
+          <template x-for="h in habitaciones" :key="h.id">
+            <div @click="abrirHabitacion(h)"
+                 class="bg-white rounded-2xl shadow-sm overflow-hidden cursor-pointer group transition-all hover:shadow-lg hover:-translate-y-0.5">
+
+              <!-- Imagen con badge de estado -->
+              <div class="relative h-44 overflow-hidden">
+                <img :src="h.imagen" :alt="h.nombre"
+                     class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                     onerror="this.src='https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=400&q=60'" />
+                <!-- Status badge -->
+                <div class="absolute top-3 left-3">
+                  <span class="text-xs font-semibold px-2.5 py-1 rounded-full shadow-sm"
+                        :class="estadoHabitacion(h.id).cls"
+                        x-text="estadoHabitacion(h.id).label"></span>
+                </div>
+                <!-- Precio overlay -->
+                <div class="absolute bottom-3 right-3 bg-black/50 backdrop-blur-sm text-gold font-serif text-base px-3 py-1 rounded-xl">
+                  <span x-text="'$'+h.precio.toLocaleString('es-MX')"></span>
+                  <span class="text-white/50 text-xs">/noche</span>
+                </div>
+              </div>
+
+              <div class="p-5">
+                <div class="flex items-start justify-between mb-1">
+                  <div>
+                    <div class="font-serif text-base font-semibold text-forest" x-text="h.nombre"></div>
+                    <div class="text-forest/40 text-xs" x-text="h.tipo + ' · hasta ' + h.capacidad + ' persona(s)'"></div>
+                  </div>
+                  <svg class="w-4 h-4 text-forest/20 group-hover:text-gold transition-colors mt-1 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+                </div>
+
+                <!-- Barra de ocupación próximos 30 días -->
+                <div class="mt-3 mb-3">
+                  <div class="flex justify-between text-xs text-forest/40 mb-1">
+                    <span>Ocupación próx. 30 días</span>
+                    <span x-text="ocupacionPct(h.id)+'%'"></span>
+                  </div>
+                  <div class="h-1.5 bg-ivory-dark rounded-full overflow-hidden">
+                    <div class="h-full rounded-full bg-gold transition-all duration-700"
+                         :style="`width:${ocupacionPct(h.id)}%`"></div>
+                  </div>
+                </div>
+
+                <!-- Próxima / actual reserva -->
+                <div class="border-t border-ivory-dark pt-3">
+                  <template x-if="reservasActivasDe(h.id).length > 0">
+                    <div class="flex items-center gap-2">
+                      <span :class="'badge-'+reservasActivasDe(h.id)[0].estado"
+                            class="text-xs px-1.5 py-0.5 rounded-full font-medium flex-shrink-0"
+                            x-text="reservasActivasDe(h.id)[0].estado"></span>
+                      <span class="text-xs text-forest/60 truncate"
+                            x-text="reservasActivasDe(h.id)[0].nombre + ' · ' + reservasActivasDe(h.id)[0].checkin + ' → ' + reservasActivasDe(h.id)[0].checkout"></span>
+                    </div>
+                  </template>
+                  <template x-if="reservasActivasDe(h.id).length === 0">
+                    <div class="text-xs text-forest/30 italic flex items-center gap-1.5">
+                      <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 inline-block"></span>
+                      Sin reservas activas
+                    </div>
+                  </template>
+                </div>
+              </div>
+            </div>
+          </template>
+        </div>
+      </div>
+
+      <!-- ── CALENDARIO VIEW ──────────────────────── -->
+      <div x-show="view==='calendario'" class="fade-in">
+
+        <div class="mb-6 flex flex-wrap items-center justify-between gap-4">
+          <div>
+            <h1 class="font-serif text-3xl text-forest">Calendario</h1>
+            <p class="text-forest/50 text-sm mt-1">Reservas por mes y próximos check-ins</p>
+          </div>
+          <div class="flex items-center gap-2">
+            <button @click="calPrevMonth()" class="w-9 h-9 rounded-xl border border-ivory-dark flex items-center justify-center hover:border-gold hover:text-gold transition-colors cursor-pointer text-forest/60">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+            </button>
+            <span class="font-serif text-forest text-lg capitalize min-w-40 text-center" x-text="calMonthName()"></span>
+            <button @click="calNextMonth()" class="w-9 h-9 rounded-xl border border-ivory-dark flex items-center justify-center hover:border-gold hover:text-gold transition-colors cursor-pointer text-forest/60">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+            </button>
+            <button @click="calGoToday()" class="ml-2 text-xs text-gold hover:text-gold-light uppercase tracking-widest transition-colors cursor-pointer">Hoy</button>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 xl:grid-cols-3 gap-6">
+
+          <!-- ── Calendario mensual ── -->
+          <div class="xl:col-span-2 bg-white rounded-2xl shadow-sm p-6">
+            <!-- Cabeceras días -->
+            <div class="grid grid-cols-7 mb-2">
+              <template x-for="d in ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb']">
+                <div class="text-center text-forest/40 text-xs font-medium py-2" x-text="d"></div>
+              </template>
+            </div>
+            <!-- Celdas -->
+            <div class="grid grid-cols-7 gap-1">
+              <!-- padding inicio del mes -->
+              <template x-for="p in calPadding()">
+                <div class="h-20 md:h-24 rounded-xl"></div>
+              </template>
+              <!-- días -->
+              <template x-for="day in calDaysInMonth()" :key="day">
+                <div @click="calSelectDay(day)"
+                     class="h-20 md:h-24 rounded-xl p-1.5 flex flex-col border transition-all cursor-pointer"
+                     :class="calDayClasses(day)">
+                  <!-- número del día -->
+                  <span class="text-xs font-semibold leading-none mb-1 self-start px-1 py-0.5 rounded-lg"
+                        :class="calIsToday(day) ? 'bg-gold text-forest' : 'text-forest/60'"
+                        x-text="day"></span>
+                  <!-- dots / chips de reservas -->
+                  <div class="flex flex-col gap-0.5 overflow-hidden flex-1">
+                    <template x-for="r in calReservasEnDia(day).slice(0,3)" :key="r.id">
+                      <div @click.stop="abrirDetalle(r)"
+                           class="text-xs px-1.5 py-0.5 rounded leading-tight truncate cursor-pointer hover:opacity-80 transition-opacity"
+                           :class="r.estado==='confirmada' ? 'bg-emerald-100 text-emerald-800' : r.estado==='cancelada' ? 'bg-red-100 text-red-700' : 'bg-amber-100 text-amber-800'"
+                           x-text="r.nombre.split(' ')[0]"></div>
+                    </template>
+                    <div x-show="calReservasEnDia(day).length > 3"
+                         class="text-xs text-forest/40 px-1"
+                         x-text="'+'+(calReservasEnDia(day).length-3)+' más'"></div>
+                  </div>
+                </div>
+              </template>
+            </div>
+            <!-- Leyenda -->
+            <div class="flex flex-wrap gap-4 mt-4 text-xs text-forest/50 border-t border-ivory-dark pt-4">
+              <span class="flex items-center gap-1.5"><span class="w-3 h-3 rounded bg-amber-100 border border-amber-200"></span>Pendiente</span>
+              <span class="flex items-center gap-1.5"><span class="w-3 h-3 rounded bg-emerald-100 border border-emerald-200"></span>Confirmada</span>
+              <span class="flex items-center gap-1.5"><span class="w-3 h-3 rounded bg-red-100 border border-red-200"></span>Cancelada</span>
+              <span class="flex items-center gap-1.5"><span class="w-3 h-3 rounded bg-gold/20 border border-gold/40"></span>Hoy</span>
+            </div>
+          </div>
+
+          <!-- ── Próximas 10 reservas ── -->
+          <div class="bg-white rounded-2xl shadow-sm p-6 flex flex-col">
+            <h3 class="font-serif text-lg text-forest mb-1">Próximas reservas</h3>
+            <p class="text-forest/40 text-xs mb-4">Click en una para ver el detalle</p>
+            <div class="flex-1 space-y-2 overflow-y-auto max-h-[680px] pr-1">
+              <template x-for="r in proximas10()" :key="r.id">
+                <div @click="abrirDetalle(r)"
+                     class="group flex items-start gap-3 p-3 rounded-xl border border-ivory-dark hover:border-gold/40 hover:bg-ivory/60 cursor-pointer transition-all">
+                  <!-- Fecha pill -->
+                  <div class="flex-shrink-0 bg-forest rounded-xl w-11 text-center py-1.5">
+                    <div class="text-gold text-sm font-serif font-semibold leading-none" x-text="r.checkin.slice(8)"></div>
+                    <div class="text-white/40 text-xs leading-none mt-0.5 uppercase" x-text="['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'][parseInt(r.checkin.slice(5,7))-1]"></div>
+                  </div>
+                  <div class="flex-1 min-w-0">
+                    <div class="flex items-center gap-1.5 mb-0.5">
+                      <span class="font-medium text-forest text-sm truncate" x-text="r.nombre"></span>
+                    </div>
+                    <div class="text-forest/50 text-xs truncate" x-text="r.habitacion_nombre"></div>
+                    <div class="flex items-center gap-2 mt-1">
+                      <span :class="'badge-'+r.estado" class="text-xs px-1.5 py-0.5 rounded-full font-medium" x-text="r.estado"></span>
+                      <span class="text-forest/40 text-xs" x-text="'$'+(r.total||0).toLocaleString('es-MX')"></span>
+                    </div>
+                  </div>
+                  <svg class="w-4 h-4 text-forest/20 group-hover:text-gold transition-colors flex-shrink-0 mt-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+                </div>
+              </template>
+              <div x-show="proximas10().length===0" class="text-center py-8 text-forest/30 text-sm">
+                No hay reservas próximas.
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Reservas del día seleccionado -->
+        <div x-show="calDaySelected" x-transition class="mt-6 bg-white rounded-2xl shadow-sm p-6">
+          <h3 class="font-serif text-lg text-forest mb-4">
+            Reservas del
+            <span class="text-gold" x-text="calDaySelected ? calDayLabel() : ''"></span>
+          </h3>
+          <div class="space-y-3">
+            <template x-for="r in calReservasEnDia(calDaySelected)" :key="r.id">
+              <div @click="abrirDetalle(r)"
+                   class="flex flex-wrap items-center gap-3 p-4 border border-ivory-dark rounded-xl hover:border-gold/40 cursor-pointer transition-all hover:bg-ivory/60">
+                <div class="flex-1 min-w-0">
+                  <div class="font-medium text-forest" x-text="r.nombre"></div>
+                  <div class="text-forest/50 text-xs" x-text="r.habitacion_nombre + ' · ' + r.checkin + ' → ' + r.checkout + ' · ' + (r.noches ?? Math.round((new Date(r.checkout)-new Date(r.checkin))/86400000)) + ' noches'"></div>
+                </div>
+                <span :class="'badge-'+r.estado" class="text-xs px-2 py-1 rounded-full font-medium" x-text="r.estado"></span>
+                <span class="text-forest font-medium text-sm" x-text="'$'+(r.total||0).toLocaleString('es-MX')"></span>
+                <svg class="w-4 h-4 text-forest/30" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+              </div>
+            </template>
+            <div x-show="calReservasEnDia(calDaySelected).length===0" class="text-forest/30 text-sm text-center py-4">
+              Sin reservas este día.
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- ── FINANZAS VIEW ─────────────────────────── -->
+      <div x-show="view==='finanzas'" class="fade-in">
+
+        <!-- Header + filtros de período -->
+        <div class="mb-6 flex flex-wrap items-start justify-between gap-4">
+          <div>
+            <h1 class="font-serif text-3xl text-forest">Finanzas</h1>
+            <p class="text-forest/50 text-sm mt-1">Ingresos, ocupación y flujo de caja</p>
+          </div>
+          <div class="flex flex-wrap gap-2">
+            <template x-for="p in [{k:'hoy',l:'Hoy'},{k:'semana',l:'Semana'},{k:'mes',l:'Mes'},{k:'anio',l:'Año'},{k:'todo',l:'Todo'}]" :key="p.k">
+              <button @click="finPeriodo=p.k"
+                      :class="finPeriodo===p.k ? 'bg-forest text-white shadow-sm' : 'bg-white text-forest/60 hover:border-gold hover:text-gold'"
+                      class="text-xs font-medium px-4 py-2 rounded-xl border border-ivory-dark transition-all cursor-pointer"
+                      x-text="p.l"></button>
+            </template>
+          </div>
+        </div>
+
+        <!-- KPI row -->
+        <div class="grid grid-cols-2 xl:grid-cols-4 gap-4 mb-6">
+          <div class="bg-forest rounded-2xl p-5 text-white stat-card">
+            <div class="text-white/40 text-xs uppercase tracking-widest mb-2">Ingresos confirmados</div>
+            <div class="font-serif text-3xl text-gold" x-text="'$'+finKpis().confirmado.toLocaleString('es-MX')"></div>
+            <div class="text-white/30 text-xs mt-1" x-text="finKpis().numConf+' reservas'"></div>
+          </div>
+          <div class="bg-white rounded-2xl p-5 border border-ivory-dark stat-card">
+            <div class="text-forest/40 text-xs uppercase tracking-widest mb-2">Pendientes por cobrar</div>
+            <div class="font-serif text-3xl text-amber-500" x-text="'$'+finKpis().pendiente.toLocaleString('es-MX')"></div>
+            <div class="text-forest/30 text-xs mt-1" x-text="finKpis().numPend+' reservas'"></div>
+          </div>
+          <div class="bg-white rounded-2xl p-5 border border-ivory-dark stat-card">
+            <div class="text-forest/40 text-xs uppercase tracking-widest mb-2">Ticket promedio</div>
+            <div class="font-serif text-3xl text-forest" x-text="'$'+finKpis().ticketProm.toLocaleString('es-MX')"></div>
+            <div class="text-forest/30 text-xs mt-1" x-text="finKpis().nochesTotal+' noches vendidas'"></div>
+          </div>
+          <div class="bg-white rounded-2xl p-5 border border-ivory-dark stat-card">
+            <div class="text-forest/40 text-xs uppercase tracking-widest mb-2">Ocupación período</div>
+            <div class="font-serif text-3xl text-forest" x-text="finKpis().ocupPct+'%'"></div>
+            <div class="flex items-center gap-2 mt-2">
+              <div class="flex-1 h-1.5 bg-ivory-dark rounded-full overflow-hidden">
+                <div class="h-full rounded-full bg-gold transition-all duration-700" :style="`width:${finKpis().ocupPct}%`"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Barras + Dona -->
+        <div class="grid grid-cols-1 xl:grid-cols-3 gap-6 mb-6">
+          <!-- Barras ingresos -->
+          <div class="xl:col-span-2 bg-white rounded-2xl shadow-sm p-6">
+            <div class="flex items-center justify-between mb-5">
+              <h3 class="font-serif text-lg text-forest">Ingresos por período</h3>
+              <span class="text-forest/30 text-xs" x-text="finPeriodo==='hoy'||finPeriodo==='semana' ? 'últimos 14 días' : finPeriodo==='mes' ? 'últimas 8 semanas' : 'últimos 12 meses'"></span>
+            </div>
+            <div class="relative" style="height:160px">
+              <svg class="w-full h-full" viewBox="0 0 560 160" preserveAspectRatio="none">
+                <line x1="0" y1="155" x2="560" y2="155" stroke="#ede8df" stroke-width="1"/>
+                <template x-for="(b,i) in finBars()" :key="i">
+                  <g>
+                    <rect :x="b.x" :y="155-b.h" :width="b.w-2" :height="b.h"
+                          :fill="b.h>0 ? '#000A1C' : '#ede8df'" rx="3"
+                          class="cursor-pointer hover:opacity-75 transition-opacity"
+                          @mouseenter="finTooltip={show:true,label:b.label,val:b.val}"
+                          @mouseleave="finTooltip.show=false"/>
+                    <text :x="b.x+b.w/2-1" y="159" text-anchor="middle" font-size="7.5" fill="#94a3b8" x-text="b.short"></text>
+                  </g>
+                </template>
+              </svg>
+              <div x-show="finTooltip.show" x-transition
+                   class="absolute top-2 left-1/2 -translate-x-1/2 pointer-events-none bg-forest text-white text-xs rounded-lg px-3 py-2 shadow-xl whitespace-nowrap z-10">
+                <div class="font-medium" x-text="finTooltip.label"></div>
+                <div class="text-gold font-semibold" x-text="'$'+(finTooltip.val||0).toLocaleString('es-MX')"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Dona por tipo -->
+          <div class="bg-white rounded-2xl shadow-sm p-6 flex flex-col">
+            <h3 class="font-serif text-lg text-forest mb-4">Por tipo de habitación</h3>
+            <div class="flex justify-center mb-4">
+              <svg width="130" height="130" viewBox="0 0 130 130">
+                <template x-for="(s,i) in finDonaSegments()" :key="i">
+                  <circle cx="65" cy="65" r="48" fill="none" :stroke="s.color" stroke-width="20"
+                          :stroke-dasharray="`${s.dash} ${s.gap}`" :stroke-dashoffset="s.offset"
+                          style="transition:all 0.7s ease"/>
+                </template>
+                <circle cx="65" cy="65" r="48" fill="none" stroke="#ede8df" stroke-width="20"
+                        x-show="finDonaSegments().length===0" stroke-dasharray="301 0"/>
+                <text x="65" y="61" text-anchor="middle" font-size="16" font-family="Cormorant,Georgia,serif" fill="#1a3a2a"
+                      x-text="finKpis().confirmado>0 ? '$'+(finKpis().confirmado/1000).toFixed(0)+'k' : '$0'"></text>
+                <text x="65" y="75" text-anchor="middle" font-size="8" fill="#94a3b8">confirmado</text>
+              </svg>
+            </div>
+            <div class="space-y-2 flex-1">
+              <template x-for="s in finDonaSegments()" :key="s.tipo">
+                <div class="flex items-center justify-between text-xs">
+                  <div class="flex items-center gap-2">
+                    <span class="w-2.5 h-2.5 rounded-full flex-shrink-0" :style="`background:${s.color}`"></span>
+                    <span class="text-forest/70" x-text="s.tipo"></span>
+                  </div>
+                  <span class="text-forest font-medium" x-text="'$'+s.total.toLocaleString('es-MX')"></span>
+                </div>
+              </template>
+              <div x-show="finDonaSegments().length===0" class="text-forest/30 text-center text-xs py-4">Sin datos en este período</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tabla + comparativa mes -->
+        <div class="grid grid-cols-1 xl:grid-cols-3 gap-6 mb-6">
+          <!-- Tabla por habitación -->
+          <div class="xl:col-span-2 bg-white rounded-2xl shadow-sm overflow-hidden">
+            <div class="px-6 py-4 border-b border-ivory-dark flex items-center justify-between">
+              <h3 class="font-serif text-lg text-forest">Desglose por habitación</h3>
+              <span class="text-forest/30 text-xs">período seleccionado</span>
+            </div>
+            <div class="overflow-x-auto">
+              <table class="w-full text-sm">
+                <thead>
+                  <tr class="bg-ivory/60">
+                    <th class="text-left px-5 py-3 text-forest/50 text-xs font-medium uppercase tracking-widest">Habitación</th>
+                    <th class="text-right px-4 py-3 text-forest/50 text-xs font-medium uppercase tracking-widest">Reservas</th>
+                    <th class="text-right px-4 py-3 text-forest/50 text-xs font-medium uppercase tracking-widest">Noches</th>
+                    <th class="text-right px-4 py-3 text-forest/50 text-xs font-medium uppercase tracking-widest">Confirmado</th>
+                    <th class="text-right px-5 py-3 text-forest/50 text-xs font-medium uppercase tracking-widest">% Total</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <template x-for="row in finTablaHabs()" :key="row.id">
+                    <tr class="border-t border-ivory-dark hover:bg-ivory/40 transition-colors">
+                      <td class="px-5 py-3.5">
+                        <div class="font-medium text-forest" x-text="row.nombre"></div>
+                        <div class="text-forest/40 text-xs" x-text="row.tipo"></div>
+                      </td>
+                      <td class="px-4 py-3.5 text-right text-forest/70" x-text="row.reservas"></td>
+                      <td class="px-4 py-3.5 text-right text-forest/70" x-text="row.noches"></td>
+                      <td class="px-4 py-3.5 text-right font-medium text-forest" x-text="'$'+row.total.toLocaleString('es-MX')"></td>
+                      <td class="px-5 py-3.5">
+                        <div class="flex items-center gap-2 justify-end">
+                          <div class="w-16 h-1.5 bg-ivory-dark rounded-full overflow-hidden">
+                            <div class="h-full bg-gold rounded-full" :style="`width:${row.pct}%`"></div>
+                          </div>
+                          <span class="text-forest/50 text-xs w-8 text-right" x-text="row.pct+'%'"></span>
+                        </div>
+                      </td>
+                    </tr>
+                  </template>
+                  <tr x-show="finTablaHabs().length===0">
+                    <td colspan="5" class="text-center py-8 text-forest/30 text-sm">Sin reservas en este período</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Mes actual vs anterior -->
+          <div class="bg-white rounded-2xl shadow-sm p-6 flex flex-col">
+            <h3 class="font-serif text-lg text-forest mb-1">Este mes vs anterior</h3>
+            <p class="text-forest/40 text-xs mb-5">Ingresos confirmados acumulados</p>
+            <div class="space-y-5 flex-1">
+              <div>
+                <div class="flex justify-between text-xs mb-1.5">
+                  <span class="text-forest/70 font-medium" x-text="finMesActualNombre()"></span>
+                  <span class="text-forest font-semibold" x-text="'$'+finMesActual().toLocaleString('es-MX')"></span>
+                </div>
+                <div class="h-3 bg-ivory-dark rounded-full overflow-hidden">
+                  <div class="h-full bg-forest rounded-full transition-all duration-700"
+                       :style="`width:${Math.max(finMesActual(),finMesAnterior())>0 ? Math.round(finMesActual()/Math.max(finMesActual(),finMesAnterior())*100) : 0}%`"></div>
+                </div>
+              </div>
+              <div>
+                <div class="flex justify-between text-xs mb-1.5">
+                  <span class="text-forest/40" x-text="finMesAnteriorNombre()"></span>
+                  <span class="text-forest/60" x-text="'$'+finMesAnterior().toLocaleString('es-MX')"></span>
+                </div>
+                <div class="h-3 bg-ivory-dark rounded-full overflow-hidden">
+                  <div class="h-full bg-gold/60 rounded-full transition-all duration-700"
+                       :style="`width:${Math.max(finMesActual(),finMesAnterior())>0 ? Math.round(finMesAnterior()/Math.max(finMesActual(),finMesAnterior())*100) : 0}%`"></div>
+                </div>
+              </div>
+            </div>
+            <div class="mt-5 pt-4 border-t border-ivory-dark flex items-center justify-between">
+              <span class="text-forest/40 text-xs">Variación</span>
+              <div :class="finDeltaMes()>=0 ? 'bg-emerald-50 text-emerald-700' : 'bg-red-50 text-red-500'"
+                   class="text-sm font-bold px-3 py-1 rounded-lg"
+                   x-text="(finDeltaMes()>=0?'+':'')+finDeltaMes()+'%'"></div>
+            </div>
+            <div class="mt-4 grid grid-cols-3 gap-2">
+              <div class="bg-ivory-dark rounded-xl p-3 text-center">
+                <div class="font-serif text-lg text-forest" x-text="finKpis().numConf"></div>
+                <div class="text-forest/40 text-xs mt-0.5">Conf.</div>
+              </div>
+              <div class="bg-ivory-dark rounded-xl p-3 text-center">
+                <div class="font-serif text-lg text-amber-500" x-text="finKpis().numPend"></div>
+                <div class="text-forest/40 text-xs mt-0.5">Pend.</div>
+              </div>
+              <div class="bg-ivory-dark rounded-xl p-3 text-center">
+                <div class="font-serif text-lg text-red-400" x-text="finKpis().numCanc"></div>
+                <div class="text-forest/40 text-xs mt-0.5">Canc.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Flujo de caja próximas 8 semanas -->
+        <div class="bg-white rounded-2xl shadow-sm p-6">
+          <div class="flex items-center justify-between mb-5">
+            <div>
+              <h3 class="font-serif text-lg text-forest">Flujo de caja — próximas 8 semanas</h3>
+              <p class="text-forest/40 text-xs mt-0.5">Ingresos esperados por semana según reservas activas</p>
+            </div>
+            <div class="hidden md:flex items-center gap-4 text-xs text-forest/40">
+              <span class="flex items-center gap-1.5"><span class="w-3 h-3 rounded bg-forest inline-block"></span>Confirmado</span>
+              <span class="flex items-center gap-1.5"><span class="w-3 h-3 rounded bg-gold/50 inline-block"></span>Pendiente</span>
+            </div>
+          </div>
+          <div class="space-y-3">
+            <template x-for="sem in finFlujoCaja()" :key="sem.label">
+              <div class="flex items-center gap-3">
+                <div class="text-forest/50 text-xs w-28 flex-shrink-0" x-text="sem.label"></div>
+                <div class="flex-1 flex h-8 rounded-xl overflow-hidden bg-ivory-dark">
+                  <div class="h-full bg-forest flex items-center px-2 transition-all duration-700 min-w-0"
+                       :style="`width:${sem.confPct}%`" x-show="sem.confPct>0">
+                    <span class="text-white text-xs font-medium truncate" x-show="sem.confPct>10"
+                          x-text="'$'+(sem.conf/1000).toFixed(1)+'k'"></span>
+                  </div>
+                  <div class="h-full bg-gold/50 flex items-center px-2 transition-all duration-700 min-w-0"
+                       :style="`width:${sem.pendPct}%`" x-show="sem.pendPct>0">
+                    <span class="text-forest/70 text-xs truncate" x-show="sem.pendPct>10"
+                          x-text="'$'+(sem.pend/1000).toFixed(1)+'k'"></span>
+                  </div>
+                </div>
+                <div class="text-forest/60 text-xs w-20 text-right font-medium flex-shrink-0"
+                     x-text="(sem.conf+sem.pend)>0 ? '$'+(sem.conf+sem.pend).toLocaleString('es-MX') : '—'"></div>
+              </div>
+            </template>
+            <div x-show="finFlujoCaja().every(s=>s.conf+s.pend===0)"
+                 class="text-center py-6 text-forest/30 text-sm">Sin ingresos proyectados en las próximas semanas</div>
+          </div>
+        </div>
+
+      </div><!-- /finanzas -->
+
+      <!-- ── EDITAR HABITACIONES VIEW ──────────────────── -->
+      <div x-show="view==='editar-hab'" class="fade-in">
+
+        <div class="mb-6 flex items-center justify-between">
+          <div>
+            <h1 class="font-serif text-3xl text-forest">Editar habitaciones</h1>
+            <p class="text-forest/50 text-sm mt-1">Haz clic en una habitación para editar sus datos</p>
+          </div>
+          <div class="text-forest/30 text-xs" x-text="habitaciones.length + ' habitaciones'"></div>
+        </div>
+
+        <!-- Grid de cards -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5">
+          <template x-for="h in habitaciones" :key="h.id">
+            <div @click="abrirEditorHab(h)"
+                 class="bg-white rounded-2xl shadow-sm overflow-hidden cursor-pointer group hover:shadow-lg hover:-translate-y-0.5 transition-all">
+              <!-- Imagen -->
+              <div class="relative h-44 overflow-hidden">
+                <img :src="h.imagen" :alt="h.nombre"
+                     class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                     onerror="this.src='https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=600&q=70'" />
+                <div class="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent"></div>
+                <!-- Editar badge -->
+                <div class="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <div class="bg-gold text-forest text-xs font-semibold px-2.5 py-1 rounded-full flex items-center gap-1.5">
+                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                    Editar
+                  </div>
+                </div>
+                <div class="absolute bottom-3 left-4">
+                  <p class="text-white/70 text-xs tracking-widest uppercase" x-text="h.tipo"></p>
+                  <h3 class="text-white font-serif text-lg leading-tight" x-text="h.nombre"></h3>
+                </div>
+              </div>
+              <!-- Info rápida -->
+              <div class="p-4 flex items-center justify-between">
+                <div class="flex gap-4 text-sm">
+                  <span class="text-forest/50"><span class="font-semibold text-forest" x-text="'$'+h.precio.toLocaleString('es-MX')"></span>/noche</span>
+                  <span class="text-forest/50"><span class="font-semibold text-forest" x-text="h.capacidad"></span> pers.</span>
+                </div>
+                <span class="text-xs text-forest/30" x-text="(h.amenidades||[]).length + ' amenidades'"></span>
+              </div>
+            </div>
+          </template>
+        </div>
+
+      </div><!-- /editar-hab -->
+
+    </main>
+  </div>
+
+  </div><!-- /panel autenticado -->
+
+  <!-- ── Drawer Editor Habitación ─────────────────────────── -->
+  <div x-show="editHab"
+       x-transition:enter="transition duration-300" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
+       x-transition:leave="transition duration-200" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0"
+       class="fixed inset-0 bg-black/60 z-[70] flex justify-end"
+       @click="editHab=null">
+
+    <div @click.stop
+         x-show="editHab"
+         x-transition:enter="transition duration-300" x-transition:enter-start="translate-x-full" x-transition:enter-end="translate-x-0"
+         x-transition:leave="transition duration-200" x-transition:leave-start="translate-x-0" x-transition:leave-end="translate-x-full"
+         class="relative w-full max-w-lg bg-ivory h-full overflow-y-auto flex flex-col shadow-2xl">
+
+      <!-- Header -->
+      <div class="flex-shrink-0 bg-forest px-6 py-5 flex items-center justify-between">
+        <div>
+          <p class="text-gold/70 text-xs tracking-widest uppercase font-light">Editando</p>
+          <h2 class="font-serif text-xl text-white" x-text="editHab?.nombre"></h2>
+        </div>
+        <button @click="editHab=null"
+                class="w-9 h-9 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white cursor-pointer transition-colors">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+
+      <!-- Preview imagen actual -->
+      <div class="flex-shrink-0 relative h-48 overflow-hidden">
+        <img :src="editForm.imagen || editHab?.imagen" alt="Preview"
+             class="w-full h-full object-cover"
+             onerror="this.src='https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=600&q=70'" />
+        <div class="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent pointer-events-none"></div>
+        <div class="absolute bottom-3 left-4 text-white/60 text-xs">Vista previa de la imagen</div>
+      </div>
+
+      <!-- Formulario -->
+      <div class="flex-1 p-6 space-y-5">
+
+        <!-- Nombre -->
+        <div>
+          <label class="block text-xs uppercase tracking-widest text-forest/50 mb-1.5">Nombre de la habitación</label>
+          <input x-model="editForm.nombre" type="text"
+                 class="w-full bg-white border border-ivory-dark rounded-xl px-4 py-2.5 text-sm text-forest focus:outline-none focus:border-gold transition-colors" />
+        </div>
+
+        <!-- Tipo + Capacidad -->
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="block text-xs uppercase tracking-widest text-forest/50 mb-1.5">Tipo</label>
+            <select x-model="editForm.tipo"
+                    class="w-full bg-white border border-ivory-dark rounded-xl px-4 py-2.5 text-sm text-forest focus:outline-none focus:border-gold transition-colors cursor-pointer">
+              <option>Sencilla</option>
+              <option>Doble</option>
+              <option>Triple</option>
+              <option>Suite</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs uppercase tracking-widest text-forest/50 mb-1.5">Capacidad (personas)</label>
+            <input x-model.number="editForm.capacidad" type="number" min="1" max="10"
+                   class="w-full bg-white border border-ivory-dark rounded-xl px-4 py-2.5 text-sm text-forest focus:outline-none focus:border-gold transition-colors" />
+          </div>
+        </div>
+
+        <!-- Precio -->
+        <div>
+          <label class="block text-xs uppercase tracking-widest text-forest/50 mb-1.5">Precio por noche (MXN)</label>
+          <div class="relative">
+            <span class="absolute left-4 top-1/2 -translate-y-1/2 text-forest/40 text-sm font-medium">$</span>
+            <input x-model.number="editForm.precio" type="number" min="1"
+                   class="w-full bg-white border border-ivory-dark rounded-xl pl-8 pr-4 py-2.5 text-sm text-forest focus:outline-none focus:border-gold transition-colors" />
+          </div>
+        </div>
+
+        <!-- URL Imagen -->
+        <div>
+          <label class="block text-xs uppercase tracking-widest text-forest/50 mb-1.5">URL de imagen</label>
+          <input x-model="editForm.imagen" type="url" placeholder="https://..."
+                 class="w-full bg-white border border-ivory-dark rounded-xl px-4 py-2.5 text-sm text-forest focus:outline-none focus:border-gold transition-colors font-mono text-xs" />
+          <p class="text-forest/30 text-xs mt-1">La imagen se actualiza en la vista previa automáticamente</p>
+        </div>
+
+        <!-- Descripción -->
+        <div>
+          <label class="block text-xs uppercase tracking-widest text-forest/50 mb-1.5">Descripción</label>
+          <textarea x-model="editForm.descripcion" rows="3"
+                    class="w-full bg-white border border-ivory-dark rounded-xl px-4 py-2.5 text-sm text-forest focus:outline-none focus:border-gold transition-colors resize-none leading-relaxed"></textarea>
+        </div>
+
+        <!-- Amenidades -->
+        <div>
+          <label class="block text-xs uppercase tracking-widest text-forest/50 mb-2">Amenidades</label>
+          <!-- Lista actual -->
+          <div class="flex flex-wrap gap-2 mb-3">
+            <template x-for="(a, i) in editForm.amenidades" :key="i">
+              <div class="flex items-center gap-1 bg-white border border-ivory-dark text-forest/70 text-xs px-3 py-1.5 rounded-full">
+                <span x-text="a"></span>
+                <button @click="editForm.amenidades.splice(i,1)"
+                        class="ml-1 text-forest/30 hover:text-red-500 cursor-pointer transition-colors leading-none">
+                  <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
+              </div>
+            </template>
+            <div x-show="editForm.amenidades.length===0" class="text-forest/30 text-xs italic">Sin amenidades</div>
+          </div>
+          <!-- Agregar nueva -->
+          <div class="flex gap-2">
+            <input x-model="editNuevaAmenidad" type="text" placeholder="Nueva amenidad..."
+                   @keydown.enter.prevent="editAgregarAmenidad()"
+                   class="flex-1 bg-white border border-ivory-dark rounded-xl px-4 py-2 text-sm text-forest focus:outline-none focus:border-gold transition-colors" />
+            <button @click="editAgregarAmenidad()"
+                    class="bg-forest hover:bg-forest-mid text-gold text-xs font-semibold px-4 py-2 rounded-xl cursor-pointer transition-colors">
+              + Agregar
+            </button>
+          </div>
+        </div>
+
+        <!-- Guardado status -->
+        <div x-show="editSaveMsg" x-transition
+             :class="editSaveMsg==='ok' ? 'bg-emerald-50 border-emerald-200 text-emerald-700' : 'bg-red-50 border-red-200 text-red-600'"
+             class="border rounded-xl px-4 py-3 text-sm flex items-center gap-2">
+          <svg x-show="editSaveMsg==='ok'" class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+          <svg x-show="editSaveMsg==='error'" class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+          <span x-text="editSaveMsg==='ok' ? 'Cambios guardados correctamente' : 'Error al guardar. Verifica que el servidor esté corriendo.'"></span>
+        </div>
+
+      </div>
+
+      <!-- Footer con acciones -->
+      <div class="flex-shrink-0 px-6 py-4 bg-white border-t border-ivory-dark flex gap-3">
+        <button @click="editHab=null"
+                class="flex-1 border border-ivory-dark text-forest/60 hover:border-forest/30 text-sm py-2.5 rounded-xl cursor-pointer transition-colors">
+          Cancelar
+        </button>
+        <button @click="guardarHabitacion()"
+                :disabled="editSaving"
+                class="flex-1 bg-forest hover:bg-forest-mid disabled:opacity-50 text-gold font-semibold text-sm py-2.5 rounded-xl cursor-pointer transition-colors flex items-center justify-center gap-2">
+          <svg x-show="editSaving" class="w-4 h-4 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+          <span x-text="editSaving ? 'Guardando...' : 'Guardar cambios'"></span>
+        </button>
+      </div>
+
+    </div>
+  </div><!-- /drawer editor -->
+
+  <!-- ── Drawer Habitación ──────────────────────────────────── -->
+  <div x-show="habitacionSeleccionada"
+       x-transition:enter="transition duration-300" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
+       x-transition:leave="transition duration-200" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0"
+       class="fixed inset-0 bg-black/60 z-[60] flex justify-end"
+       @click="habitacionSeleccionada=null">
+
+    <div @click.stop
+         x-show="habitacionSeleccionada"
+         x-transition:enter="transition duration-300" x-transition:enter-start="translate-x-full" x-transition:enter-end="translate-x-0"
+         x-transition:leave="transition duration-200" x-transition:leave-start="translate-x-0" x-transition:leave-end="translate-x-full"
+         class="bg-white w-full max-w-lg h-full overflow-y-auto flex flex-col shadow-2xl">
+
+      <!-- Imagen hero -->
+      <div class="relative h-56 flex-shrink-0">
+        <img :src="habitacionSeleccionada?.imagen" :alt="habitacionSeleccionada?.nombre"
+             class="w-full h-full object-cover"
+             onerror="this.src='https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=600&q=70'" />
+        <div class="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent"></div>
+
+        <!-- Cerrar -->
+        <button @click="habitacionSeleccionada=null"
+                class="absolute top-4 right-4 w-9 h-9 rounded-full bg-black/40 hover:bg-black/60 flex items-center justify-center text-white cursor-pointer transition-colors">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+
+        <!-- Badge estado -->
+        <div class="absolute top-4 left-4">
+          <span class="text-xs font-semibold px-2.5 py-1 rounded-full shadow"
+                :class="estadoHabitacion(habitacionSeleccionada?.id).cls"
+                x-text="estadoHabitacion(habitacionSeleccionada?.id).label"></span>
+        </div>
+
+        <!-- Info en overlay -->
+        <div class="absolute bottom-4 left-5 right-5">
+          <p class="text-gold/80 text-xs tracking-widest uppercase font-light" x-text="habitacionSeleccionada?.tipo"></p>
+          <h2 class="font-serif text-2xl text-white" x-text="habitacionSeleccionada?.nombre"></h2>
+        </div>
+      </div>
+
+      <!-- Body -->
+      <div class="flex-1 p-6 space-y-6">
+
+        <!-- KPIs de la habitación -->
+        <div class="grid grid-cols-3 gap-3">
+          <div class="bg-ivory-dark rounded-xl p-3 text-center">
+            <div class="font-serif text-xl text-forest" x-text="'$'+((habitacionSeleccionada?.precio||0).toLocaleString('es-MX'))"></div>
+            <div class="text-forest/40 text-xs mt-0.5">por noche</div>
+          </div>
+          <div class="bg-ivory-dark rounded-xl p-3 text-center">
+            <div class="font-serif text-xl text-forest" x-text="habitacionSeleccionada?.capacidad+' pers.'"></div>
+            <div class="text-forest/40 text-xs mt-0.5">capacidad</div>
+          </div>
+          <div class="bg-ivory-dark rounded-xl p-3 text-center">
+            <div class="font-serif text-xl text-forest" x-text="reservasTotalesDe(habitacionSeleccionada?.id)"></div>
+            <div class="text-forest/40 text-xs mt-0.5">reservas</div>
+          </div>
+        </div>
+
+        <!-- Barra ocupación 30 días -->
+        <div>
+          <div class="flex justify-between text-xs text-forest/50 mb-1.5">
+            <span>Ocupación próximos 30 días</span>
+            <span class="font-medium text-forest" x-text="ocupacionPct(habitacionSeleccionada?.id)+'%'"></span>
+          </div>
+          <div class="h-2 bg-ivory-dark rounded-full overflow-hidden">
+            <div class="h-full rounded-full bg-gold transition-all duration-700"
+                 :style="`width:${ocupacionPct(habitacionSeleccionada?.id)}%`"></div>
+          </div>
+          <p class="text-forest/30 text-xs mt-1" x-text="ocupacionDias(habitacionSeleccionada?.id)+' de 30 días reservados'"></p>
+        </div>
+
+        <!-- Descripción -->
+        <div>
+          <h4 class="text-xs uppercase tracking-widest text-forest/40 mb-2">Descripción</h4>
+          <p class="text-forest/70 text-sm leading-relaxed" x-text="habitacionSeleccionada?.descripcion"></p>
+        </div>
+
+        <!-- Amenidades -->
+        <div>
+          <h4 class="text-xs uppercase tracking-widest text-forest/40 mb-2">Amenidades</h4>
+          <div class="flex flex-wrap gap-1.5">
+            <template x-for="a in (habitacionSeleccionada?.amenidades||[])" :key="a">
+              <span class="text-xs bg-ivory-dark text-forest/60 px-3 py-1 rounded-full flex items-center gap-1">
+                <span class="w-1.5 h-1.5 rounded-full bg-gold inline-block"></span>
+                <span x-text="a"></span>
+              </span>
+            </template>
+          </div>
+        </div>
+
+        <!-- Ingresos de esta habitación -->
+        <div class="bg-forest rounded-2xl p-4 flex items-center justify-between">
+          <div>
+            <div class="text-white/50 text-xs uppercase tracking-widest">Ingresos confirmados</div>
+            <div class="font-serif text-2xl text-gold mt-0.5" x-text="'$'+ingresosDe(habitacionSeleccionada?.id).toLocaleString('es-MX')"></div>
+          </div>
+          <div class="text-right">
+            <div class="text-white/30 text-xs">Pendientes</div>
+            <div class="text-white/70 text-sm font-serif" x-text="'$'+pendiendtesDe(habitacionSeleccionada?.id).toLocaleString('es-MX')"></div>
+          </div>
+        </div>
+
+        <!-- Todas las reservas de esta habitación -->
+        <div>
+          <h4 class="text-xs uppercase tracking-widest text-forest/40 mb-3 flex items-center justify-between">
+            <span>Historial de reservas</span>
+            <span class="text-gold font-normal" x-text="reservasTotalesDe(habitacionSeleccionada?.id)+' total'"></span>
+          </h4>
+
+          <!-- Filtro rápido -->
+          <div class="flex gap-2 mb-3">
+            <button @click="filtroHab=''" :class="filtroHab==='' ? 'bg-forest text-white' : 'bg-ivory-dark text-forest/60 hover:bg-ivory'"
+                    class="text-xs px-3 py-1.5 rounded-lg cursor-pointer transition-colors">Todas</button>
+            <button @click="filtroHab='pendiente'" :class="filtroHab==='pendiente' ? 'bg-amber-500 text-white' : 'bg-ivory-dark text-forest/60 hover:bg-ivory'"
+                    class="text-xs px-3 py-1.5 rounded-lg cursor-pointer transition-colors">Pendientes</button>
+            <button @click="filtroHab='confirmada'" :class="filtroHab==='confirmada' ? 'bg-emerald-600 text-white' : 'bg-ivory-dark text-forest/60 hover:bg-ivory'"
+                    class="text-xs px-3 py-1.5 rounded-lg cursor-pointer transition-colors">Confirmadas</button>
+          </div>
+
+          <div class="space-y-2 max-h-72 overflow-y-auto pr-1">
+            <template x-for="r in reservasFiltDe(habitacionSeleccionada?.id)" :key="r.id">
+              <div @click="abrirDetalle(r)"
+                   class="group flex items-start gap-3 p-3 rounded-xl border border-ivory-dark hover:border-gold/40 hover:bg-ivory/50 cursor-pointer transition-all">
+                <div class="flex-shrink-0 bg-forest/8 rounded-xl w-10 text-center py-1.5">
+                  <div class="text-gold text-sm font-serif font-semibold leading-none" x-text="r.checkin.slice(8)"></div>
+                  <div class="text-forest/40 text-xs leading-none mt-0.5 uppercase" x-text="['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'][parseInt(r.checkin.slice(5,7))-1]"></div>
+                </div>
+                <div class="flex-1 min-w-0">
+                  <div class="font-medium text-forest text-sm truncate" x-text="r.nombre"></div>
+                  <div class="text-forest/40 text-xs" x-text="r.checkin+' → '+r.checkout+' · '+(r.noches??calcNoches(r))+' noches'"></div>
+                  <div class="flex items-center gap-2 mt-1">
+                    <span :class="'badge-'+r.estado" class="text-xs px-1.5 py-0.5 rounded-full font-medium" x-text="r.estado"></span>
+                    <span class="text-forest/50 text-xs" x-text="'$'+(r.total||0).toLocaleString('es-MX')"></span>
+                  </div>
+                </div>
+                <svg class="w-4 h-4 text-forest/20 group-hover:text-gold transition-colors flex-shrink-0 mt-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+              </div>
+            </template>
+            <div x-show="reservasFiltDe(habitacionSeleccionada?.id).length===0"
+                 class="text-center py-6 text-forest/30 text-sm">
+              No hay reservas con este filtro.
+            </div>
+          </div>
+        </div>
+
+      </div><!-- /body -->
+    </div>
+  </div>
+
+  <!-- ── Detalle Reserva Modal ──────────────────────────────── -->
+  <div x-show="detalleReserva" x-transition
+       class="fixed inset-0 bg-black/60 z-[60] flex items-center justify-center p-4"
+       @click="detalleReserva=null">
+    <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full overflow-hidden" @click.stop
+         x-show="detalleReserva" x-transition:enter="transition duration-200" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100">
+
+      <!-- Header verde -->
+      <div class="bg-forest px-6 py-5 flex items-start justify-between">
+        <div>
+          <p class="text-gold/70 text-xs tracking-widest uppercase font-light mb-0.5" x-text="detalleReserva?.habitacion_tipo || ''"></p>
+          <h3 class="font-serif text-xl text-white" x-text="detalleReserva?.habitacion_nombre || ''"></h3>
+          <div class="flex items-center gap-2 mt-2">
+            <span x-show="detalleReserva" :class="'badge-'+(detalleReserva?.estado||'')"
+                  class="text-xs px-2 py-0.5 rounded-full font-medium" x-text="detalleReserva?.estado"></span>
+            <span class="text-white/40 text-xs" x-text="'Reserva #'+(detalleReserva?.id||'')"></span>
+          </div>
+        </div>
+        <button @click="detalleReserva=null" class="text-white/40 hover:text-white transition-colors cursor-pointer mt-1">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+
+      <!-- Body -->
+      <div class="p-6 space-y-4">
+        <!-- Huésped -->
+        <div class="flex items-start gap-3">
+          <div class="w-9 h-9 rounded-xl bg-forest/8 flex items-center justify-center flex-shrink-0">
+            <svg class="w-4 h-4 text-forest/50" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+          </div>
+          <div>
+            <div class="text-xs text-forest/40 uppercase tracking-widest mb-0.5">Huésped</div>
+            <div class="font-medium text-forest" x-text="detalleReserva?.nombre"></div>
+            <div class="text-forest/50 text-xs" x-text="detalleReserva?.telefono"></div>
+            <div x-show="detalleReserva?.email" class="text-forest/50 text-xs" x-text="detalleReserva?.email"></div>
+          </div>
+        </div>
+
+        <!-- Fechas -->
+        <div class="flex items-start gap-3">
+          <div class="w-9 h-9 rounded-xl bg-forest/8 flex items-center justify-center flex-shrink-0">
+            <svg class="w-4 h-4 text-forest/50" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+          </div>
+          <div>
+            <div class="text-xs text-forest/40 uppercase tracking-widest mb-0.5">Estancia</div>
+            <div class="text-forest text-sm" x-text="(detalleReserva?.checkin||'') + '  →  ' + (detalleReserva?.checkout||'')"></div>
+            <div class="text-forest/50 text-xs" x-text="(detalleReserva?.noches ?? calcNoches(detalleReserva||{})) + ' noche(s) · ' + (detalleReserva?.huespedes||1) + ' huésped(es)'"></div>
+          </div>
+        </div>
+
+        <!-- Total -->
+        <div class="bg-ivory-dark rounded-xl px-4 py-3 flex items-center justify-between">
+          <div>
+            <div class="text-xs text-forest/40 uppercase tracking-widest">Total</div>
+            <div class="font-serif text-2xl text-forest" x-text="'$'+((detalleReserva?.total||0).toLocaleString('es-MX'))"></div>
+          </div>
+          <div class="text-right">
+            <div class="text-xs text-forest/40">Por noche</div>
+            <div class="text-forest/70 text-sm" x-text="'$'+((detalleReserva?.precio_noche||0).toLocaleString('es-MX'))"></div>
+          </div>
+        </div>
+
+        <!-- Notas -->
+        <div x-show="detalleReserva?.notas" class="flex items-start gap-3">
+          <div class="w-9 h-9 rounded-xl bg-amber-50 flex items-center justify-center flex-shrink-0">
+            <svg class="w-4 h-4 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z"/></svg>
+          </div>
+          <div>
+            <div class="text-xs text-forest/40 uppercase tracking-widest mb-0.5">Notas</div>
+            <div class="text-forest/70 text-sm italic" x-text="detalleReserva?.notas"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Acciones -->
+      <div class="px-6 pb-6 flex flex-wrap gap-2">
+        <button x-show="detalleReserva?.estado !== 'confirmada'"
+                @click="cambiarEstado(detalleReserva.id,'confirmada'); detalleReserva=null"
+                class="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold tracking-wide px-4 py-2.5 rounded-xl cursor-pointer transition-colors">
+          Confirmar
+        </button>
+        <button x-show="detalleReserva?.estado !== 'cancelada'"
+                @click="cambiarEstado(detalleReserva.id,'cancelada'); detalleReserva=null"
+                class="flex-1 bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 text-xs font-semibold tracking-wide px-4 py-2.5 rounded-xl cursor-pointer transition-colors">
+          Cancelar
+        </button>
+        <button x-show="detalleReserva?.estado !== 'pendiente'"
+                @click="cambiarEstado(detalleReserva.id,'pendiente'); detalleReserva=null"
+                class="bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-200 text-xs font-semibold tracking-wide px-4 py-2.5 rounded-xl cursor-pointer transition-colors">
+          Pendiente
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Confirmation Modal ───────────────────────────────── -->
+  <div x-show="modal.show" x-transition class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl shadow-xl max-w-sm w-full p-6" @click.stop>
+      <h3 class="font-serif text-xl text-forest mb-2" x-text="modal.title">¿Estás seguro?</h3>
+      <p class="text-forest/60 text-sm mb-6" x-text="modal.message"></p>
+      <div class="flex gap-3 justify-end">
+        <button @click="modal.show=false" class="px-4 py-2 text-sm text-forest/60 hover:text-forest transition-colors cursor-pointer">
+          Cancelar
+        </button>
+        <button @click="modal.action(); modal.show=false"
+                :class="modal.danger ? 'bg-red-600 hover:bg-red-700' : 'bg-forest hover:bg-forest-mid'"
+                class="px-4 py-2 text-sm text-white rounded-xl transition-colors cursor-pointer">
+          Confirmar
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const ADMIN_API = 'http://localhost:3001/api';
+
+    // Credenciales — cambiar aquí para el demo
+    const CREDS = { user: 'Admin', pass: 'Cantarranas' };
+
+    function adminApp() {
+      return {
+        // ── Auth ──
+        autenticado: false,
+        loginUser: '',
+        loginPass: '',
+        loginError: '',
+        showPass: false,
+
+        login() {
+          if (this.loginUser === CREDS.user && this.loginPass === CREDS.pass) {
+            this.autenticado = true;
+            this.loginError = '';
+            this.loadReservas();
+            this.loadHabitaciones();
+          } else {
+            this.loginError = 'Usuario o contraseña incorrectos.';
+            // shake animation
+            const form = document.querySelector('.login-card form');
+            if (form) { form.classList.remove('shake'); void form.offsetWidth; form.classList.add('shake'); }
+          }
+        },
+
+        cerrarSesion() {
+          this.autenticado = false;
+          this.loginUser = '';
+          this.loginPass = '';
+          this.loginError = '';
+          this.reservas = [];
+          this.sidebarOpen = false;
+        },
+
+        // ── App ──
+        view: 'dashboard',
+        sidebarOpen: false,
+        loading: false,
+        serverError: false,
+        search: '',
+        filtroEstado: '',
+        reservas: [],
+        habitaciones: [],
+        modal: { show: false, title: '', message: '', action: () => {}, danger: false },
+
+        // ── Calendario ──
+        calYear: new Date().getFullYear(),
+        calMonth: new Date().getMonth(),
+        calDaySelected: null,
+        detalleReserva: null,
+
+        calPrevMonth() {
+          if (this.calMonth === 0) { this.calMonth = 11; this.calYear--; }
+          else this.calMonth--;
+          this.calDaySelected = null;
+        },
+        calNextMonth() {
+          if (this.calMonth === 11) { this.calMonth = 0; this.calYear++; }
+          else this.calMonth++;
+          this.calDaySelected = null;
+        },
+        calGoToday() {
+          const n = new Date();
+          this.calYear = n.getFullYear();
+          this.calMonth = n.getMonth();
+          this.calDaySelected = null;
+        },
+        calMonthName() {
+          return new Date(this.calYear, this.calMonth).toLocaleDateString('es-MX', { month: 'long', year: 'numeric' });
+        },
+        calPadding() {
+          const dow = new Date(this.calYear, this.calMonth, 1).getDay();
+          return Array(dow).fill(0);
+        },
+        calDaysInMonth() {
+          const n = new Date(this.calYear, this.calMonth + 1, 0).getDate();
+          return Array.from({ length: n }, (_, i) => i + 1);
+        },
+        calIso(day) {
+          return `${this.calYear}-${String(this.calMonth+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+        },
+        calIsToday(day) {
+          return this.calIso(day) === new Date().toISOString().slice(0,10);
+        },
+        calReservasEnDia(day) {
+          if (!day) return [];
+          const iso = this.calIso(day);
+          return this.reservas.filter(r => r.checkin <= iso && r.checkout > iso);
+        },
+        calSelectDay(day) {
+          this.calDaySelected = this.calDaySelected === day ? null : day;
+        },
+        calDayLabel() {
+          if (!this.calDaySelected) return '';
+          return new Date(this.calYear, this.calMonth, this.calDaySelected)
+            .toLocaleDateString('es-MX', { weekday: 'long', day: 'numeric', month: 'long' });
+        },
+        calDayClasses(day) {
+          const hasRes = this.calReservasEnDia(day).length > 0;
+          const isToday = this.calIsToday(day);
+          const isSel = this.calDaySelected === day;
+          if (isSel) return 'border-gold bg-gold/5 shadow-sm';
+          if (isToday) return 'border-gold/40 bg-gold/5';
+          if (hasRes) return 'border-forest/10 bg-white hover:border-gold/30';
+          return 'border-transparent bg-ivory/30 hover:border-ivory-dark';
+        },
+
+        proximas10() {
+          const today = new Date().toISOString().slice(0,10);
+          return this.reservas
+            .filter(r => r.checkin >= today && r.estado !== 'cancelada')
+            .sort((a, b) => a.checkin.localeCompare(b.checkin))
+            .slice(0, 10);
+        },
+
+        abrirDetalle(r) {
+          this.detalleReserva = r;
+        },
+
+        // ── Habitaciones drawer ──
+        habitacionSeleccionada: null,
+        filtroHab: '',
+
+        abrirHabitacion(h) {
+          this.habitacionSeleccionada = h;
+          this.filtroHab = '';
+        },
+
+        estadoHabitacion(id) {
+          if (!id) return { label: '—', cls: 'bg-white/90 text-forest' };
+          const today = new Date().toISOString().slice(0, 10);
+          const ocupada = this.reservas.some(r =>
+            r.habitacion_id === id && r.estado !== 'cancelada' &&
+            r.checkin <= today && r.checkout > today);
+          if (ocupada) return { label: 'Ocupada hoy', cls: 'bg-emerald-500 text-white' };
+          const proxima = this.reservas.some(r =>
+            r.habitacion_id === id && r.estado !== 'cancelada' && r.checkin > today);
+          if (proxima) return { label: 'Próxima reserva', cls: 'bg-amber-400 text-forest' };
+          return { label: 'Disponible', cls: 'bg-white/90 text-forest' };
+        },
+
+        ocupacionDias(id) {
+          if (!id) return 0;
+          const today = new Date(); today.setHours(0, 0, 0, 0);
+          let dias = 0;
+          for (let d = 0; d < 30; d++) {
+            const dt = new Date(today); dt.setDate(today.getDate() + d);
+            const iso = dt.toISOString().slice(0, 10);
+            if (this.reservas.some(r =>
+              r.habitacion_id === id && r.estado !== 'cancelada' &&
+              r.checkin <= iso && r.checkout > iso)) dias++;
+          }
+          return dias;
+        },
+
+        ocupacionPct(id) {
+          return Math.round(this.ocupacionDias(id) / 30 * 100);
+        },
+
+        reservasTotalesDe(id) {
+          if (!id) return 0;
+          return this.reservas.filter(r => r.habitacion_id === id).length;
+        },
+
+        ingresosDe(id) {
+          if (!id) return 0;
+          return this.reservas
+            .filter(r => r.habitacion_id === id && r.estado === 'confirmada')
+            .reduce((s, r) => s + (r.total || 0), 0);
+        },
+
+        pendiendtesDe(id) {
+          if (!id) return 0;
+          return this.reservas
+            .filter(r => r.habitacion_id === id && r.estado === 'pendiente')
+            .reduce((s, r) => s + (r.total || 0), 0);
+        },
+
+        reservasFiltDe(id) {
+          if (!id) return [];
+          return this.reservas
+            .filter(r => r.habitacion_id === id && (!this.filtroHab || r.estado === this.filtroHab))
+            .sort((a, b) => b.checkin.localeCompare(a.checkin));
+        },
+
+        habitacionesOcupadasHoy() {
+          const today = new Date().toISOString().slice(0, 10);
+          return new Set(this.reservas
+            .filter(r => r.estado !== 'cancelada' && r.checkin <= today && r.checkout > today)
+            .map(r => r.habitacion_id)).size;
+        },
+
+        async init() {
+          // No cargamos datos hasta autenticarse
+        },
+
+        async loadReservas() {
+          this.loading = true;
+          try {
+            const res = await fetch(`${ADMIN_API}/reservas`);
+            if (!res.ok) throw new Error();
+            this.reservas = await res.json();
+            this.serverError = false;
+          } catch {
+            this.serverError = true;
+          } finally {
+            this.loading = false;
+          }
+        },
+
+        async loadHabitaciones() {
+          try {
+            const res = await fetch(`${ADMIN_API}/habitaciones`);
+            if (res.ok) this.habitaciones = await res.json();
+          } catch {}
+        },
+
+        get pendientesCount() {
+          return this.reservas.filter(r => r.estado === 'pendiente').length;
+        },
+
+        get totalIngresos() {
+          const t = this.reservas
+            .filter(r => r.estado === 'confirmada')
+            .reduce((s, r) => s + (r.total || 0), 0);
+          return '$' + t.toLocaleString('es-MX');
+        },
+
+        get filtradas() {
+          return this.reservas.filter(r => {
+            const q = this.search.toLowerCase();
+            const matchSearch = !q ||
+              r.nombre?.toLowerCase().includes(q) ||
+              r.habitacion_nombre?.toLowerCase().includes(q) ||
+              r.email?.toLowerCase().includes(q) ||
+              r.telefono?.includes(q);
+            const matchEstado = !this.filtroEstado || r.estado === this.filtroEstado;
+            return matchSearch && matchEstado;
+          });
+        },
+
+        calcNoches(r) {
+          if (!r.checkin || !r.checkout) return '—';
+          return Math.round((new Date(r.checkout) - new Date(r.checkin)) / 86400000);
+        },
+
+        // ── Dashboard chart helpers ──
+
+        renderCharts() { /* reactivity trigger — Alpine re-evaluates computed */ },
+
+        avgIngreso() {
+          const conf = this.reservas.filter(r => r.estado === 'confirmada');
+          if (!conf.length) return '$0';
+          const avg = conf.reduce((s, r) => s + (r.total || 0), 0) / conf.length;
+          return '$' + Math.round(avg).toLocaleString('es-MX');
+        },
+
+        estadosBars() {
+          const total = this.reservas.length || 1;
+          const p = this.reservas.filter(r => r.estado === 'pendiente').length;
+          const c = this.reservas.filter(r => r.estado === 'confirmada').length;
+          const x = this.reservas.filter(r => r.estado === 'cancelada').length;
+          return [
+            { label: 'Pendientes',  n: p, pct: Math.round(p / total * 100), color: '#f59e0b' },
+            { label: 'Confirmadas', n: c, pct: Math.round(c / total * 100), color: '#10b981' },
+            { label: 'Canceladas',  n: x, pct: Math.round(x / total * 100), color: '#f87171' },
+          ];
+        },
+
+        tipoStats() {
+          const counts = {};
+          this.reservas.forEach(r => {
+            let t = r.habitacion_tipo;
+            if (!t) {
+              const n = (r.habitacion_nombre || '').toLowerCase();
+              if (n.includes('suite')) t = 'Suite';
+              else if (n.includes('triple')) t = 'Triple';
+              else if (n.includes('doble')) t = 'Doble';
+              else if (n.includes('sencilla')) t = 'Sencilla';
+              else t = 'Otra';
+            }
+            counts[t] = (counts[t] || 0) + 1;
+          });
+          const max = Math.max(...Object.values(counts), 1);
+          return Object.entries(counts)
+            .sort((a, b) => b[1] - a[1])
+            .map(([tipo, n]) => ({ tipo, n, pct: Math.round(n / max * 100) }));
+        },
+
+        ocupacion14() {
+          const today = new Date(); today.setHours(0, 0, 0, 0);
+          // Padding: day of week of today (0=Sun)
+          const startDow = today.getDay();
+          const cells = [];
+          for (let i = 0; i < startDow; i++) cells.push({ empty: true, iso: 'pad'+i });
+          for (let d = 0; d < 14; d++) {
+            const dt = new Date(today); dt.setDate(today.getDate() + d);
+            const iso = dt.toISOString().slice(0, 10);
+            const n = this.reservas.filter(r => {
+              if (r.estado === 'cancelada') return false;
+              return r.checkin <= iso && r.checkout > iso;
+            }).length;
+            cells.push({ empty: false, iso, day: dt.getDate(), n });
+          }
+          return cells;
+        },
+
+        proximosCheckins() {
+          const today = new Date().toISOString().slice(0, 10);
+          return this.reservas
+            .filter(r => r.checkin >= today && r.estado !== 'cancelada')
+            .sort((a, b) => a.checkin.localeCompare(b.checkin))
+            .slice(0, 8);
+        },
+
+        reservasActivasDe(habitacion_id) {
+          return this.reservas.filter(r =>
+            r.habitacion_id === habitacion_id && r.estado !== 'cancelada'
+          );
+        },
+
+        async cambiarEstado(id, estado) {
+          const messages = {
+            confirmada: '¿Confirmar esta reserva? El huésped será atendido.',
+            cancelada: '¿Cancelar esta reserva? La habitación quedará disponible.',
+            pendiente: '¿Mover esta reserva a pendiente?'
+          };
+          const titles = { confirmada: 'Confirmar reserva', cancelada: 'Cancelar reserva', pendiente: 'Marcar pendiente' };
+
+          this.showModal(titles[estado], messages[estado], estado === 'cancelada', async () => {
+            this.loading = true;
+            try {
+              const res = await fetch(`${ADMIN_API}/reservas/${id}/estado`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ estado })
+              });
+              if (!res.ok) throw new Error();
+              await this.loadReservas();
+            } catch {
+              alert('Error al actualizar. Intenta de nuevo.');
+            } finally {
+              this.loading = false;
+            }
+          });
+        },
+
+        async eliminarReserva(id) {
+          this.showModal('Eliminar reserva', 'Esta acción no se puede deshacer. ¿Continuar?', true, async () => {
+            this.loading = true;
+            try {
+              await fetch(`${ADMIN_API}/reservas/${id}`, { method: 'DELETE' });
+              await this.loadReservas();
+            } catch {
+              alert('Error al eliminar.');
+            } finally {
+              this.loading = false;
+            }
+          });
+        },
+
+        showModal(title, message, danger, action) {
+          this.modal = { show: true, title, message, danger, action };
+        },
+
+        // ── Editor de habitaciones ────────────────────────────────
+
+        editHab: null,
+        editForm: {},
+        editNuevaAmenidad: '',
+        editSaving: false,
+        editSaveMsg: '',
+
+        abrirEditorHab(h) {
+          this.editHab = h;
+          this.editForm = {
+            nombre:      h.nombre,
+            tipo:        h.tipo,
+            capacidad:   h.capacidad,
+            precio:      h.precio,
+            imagen:      h.imagen,
+            descripcion: h.descripcion,
+            amenidades:  [...(h.amenidades || [])],
+          };
+          this.editNuevaAmenidad = '';
+          this.editSaveMsg = '';
+        },
+
+        editAgregarAmenidad() {
+          const a = this.editNuevaAmenidad.trim();
+          if (!a) return;
+          if (!this.editForm.amenidades.includes(a)) this.editForm.amenidades.push(a);
+          this.editNuevaAmenidad = '';
+        },
+
+        async guardarHabitacion() {
+          if (!this.editHab) return;
+          this.editSaving = true;
+          this.editSaveMsg = '';
+          try {
+            const res = await fetch(`${ADMIN_API}/habitaciones/${this.editHab.id}`, {
+              method: 'PATCH',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(this.editForm),
+            });
+            if (!res.ok) throw new Error();
+            const updated = await res.json();
+            // actualizar en el array local
+            const idx = this.habitaciones.findIndex(h => h.id === this.editHab.id);
+            if (idx !== -1) this.habitaciones[idx] = updated;
+            this.editHab = updated;
+            this.editSaveMsg = 'ok';
+            setTimeout(() => { this.editSaveMsg = ''; }, 3000);
+          } catch {
+            this.editSaveMsg = 'error';
+          } finally {
+            this.editSaving = false;
+          }
+        },
+
+        // ── Finanzas ──────────────────────────────────────────────
+
+        finPeriodo: 'mes',
+        finTooltip: { show: false, label: '', val: 0 },
+
+        _finRango() {
+          const now = new Date();
+          const y = now.getFullYear(), m = now.getMonth(), d = now.getDate();
+          if (this.finPeriodo === 'hoy') {
+            const iso = now.toISOString().slice(0,10);
+            return [iso, iso];
+          }
+          if (this.finPeriodo === 'semana') {
+            const mon = new Date(now); mon.setDate(d - now.getDay() + 1);
+            const sun = new Date(mon); sun.setDate(mon.getDate() + 6);
+            return [mon.toISOString().slice(0,10), sun.toISOString().slice(0,10)];
+          }
+          if (this.finPeriodo === 'mes') {
+            return [`${y}-${String(m+1).padStart(2,'0')}-01`,
+                    `${y}-${String(m+1).padStart(2,'0')}-31`];
+          }
+          if (this.finPeriodo === 'anio') {
+            return [`${y}-01-01`, `${y}-12-31`];
+          }
+          return ['0000-01-01', '9999-12-31'];
+        },
+
+        _finReservas() {
+          const [desde, hasta] = this._finRango();
+          return this.reservas.filter(r => r.checkin >= desde && r.checkin <= hasta);
+        },
+
+        // cache para evitar recálculos en cada render
+        _finCache: null,
+        _finCacheKey: '',
+
+        _finRecalc() {
+          const key = this.finPeriodo + '|' + this.reservas.length;
+          if (this._finCacheKey === key && this._finCache) return this._finCache;
+          this._finCacheKey = key;
+
+          const [desde, hasta] = this._finRango();
+          const rs = this.reservas.filter(r => r.checkin >= desde && r.checkin <= hasta);
+          const conf = rs.filter(r => r.estado === 'confirmada');
+          const pend = rs.filter(r => r.estado === 'pendiente');
+          const canc = rs.filter(r => r.estado === 'cancelada');
+          const totalConf = conf.reduce((s,r) => s+(r.total||0), 0);
+          const totalPend = pend.reduce((s,r) => s+(r.total||0), 0);
+          const noches = rs.filter(r=>r.estado!=='cancelada').reduce((s,r) => {
+            return s+(r.noches||Math.max(0,Math.round((new Date(r.checkout)-new Date(r.checkin))/86400000))||0);
+          }, 0);
+          const numAll = conf.length + pend.length;
+          const ticketProm = numAll ? Math.round((totalConf+totalPend)/numAll) : 0;
+
+          // ocupación simple: reservas activas / habitaciones en el período (sin loop de días)
+          const numHabs = this.habitaciones.length || 7;
+          const diasPeriodo = Math.max(1, Math.round((new Date(hasta)-new Date(desde))/86400000)+1);
+          const diasOcup = rs.filter(r=>r.estado!=='cancelada').reduce((s,r)=>{
+            return s+(r.noches||Math.max(0,Math.round((new Date(r.checkout)-new Date(r.checkin))/86400000))||0);
+          },0);
+          const ocupPct = Math.min(100, Math.round(diasOcup / (diasPeriodo * numHabs) * 100));
+
+          // barras
+          const now = new Date();
+          let slots = [];
+          const MESES=['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+          if (this.finPeriodo==='hoy'||this.finPeriodo==='semana') {
+            for (let i=13;i>=0;i--) {
+              const dt = new Date(now); dt.setDate(now.getDate()-i);
+              const iso = dt.toISOString().slice(0,10);
+              const val = this.reservas.filter(r=>r.checkin===iso&&r.estado==='confirmada').reduce((s,r)=>s+(r.total||0),0);
+              slots.push({label:iso, short:dt.getDate()+'/'+(dt.getMonth()+1), val});
+            }
+          } else if (this.finPeriodo==='mes') {
+            for (let i=7;i>=0;i--) {
+              const end = new Date(now); end.setDate(now.getDate()-i*7);
+              const start = new Date(end); start.setDate(end.getDate()-6);
+              const s = start.toISOString().slice(0,10), e = end.toISOString().slice(0,10);
+              const val = this.reservas.filter(r=>r.checkin>=s&&r.checkin<=e&&r.estado==='confirmada').reduce((s2,r)=>s2+(r.total||0),0);
+              slots.push({label:`${start.getDate()}/${start.getMonth()+1}-${end.getDate()}/${end.getMonth()+1}`, short:`${start.getDate()}/${start.getMonth()+1}`, val});
+            }
+          } else {
+            for (let i=11;i>=0;i--) {
+              const dt = new Date(now.getFullYear(), now.getMonth()-i, 1);
+              const y=dt.getFullYear(), mo=String(dt.getMonth()+1).padStart(2,'0');
+              const val = this.reservas.filter(r=>r.checkin.startsWith(`${y}-${mo}`)&&r.estado==='confirmada').reduce((s,r)=>s+(r.total||0),0);
+              slots.push({label:`${MESES[dt.getMonth()]} ${y}`, short:MESES[dt.getMonth()], val});
+            }
+          }
+          const maxVal = Math.max(...slots.map(s=>s.val), 1);
+          const slotW = 560/slots.length;
+          const bars = slots.map((s,i) => ({...s, x:i*slotW, w:slotW, h:Math.round((s.val/maxVal)*130)}));
+
+          // dona
+          const byTipo = {};
+          const COLORS = ['#1a3a2a','#c9a84c','#4ade80','#fb923c','#818cf8'];
+          conf.forEach(r => {
+            let t = r.habitacion_tipo;
+            if (!t) { const n=(r.habitacion_nombre||'').toLowerCase(); t=n.includes('suite')?'Suite':n.includes('triple')?'Triple':n.includes('doble')?'Doble':'Sencilla'; }
+            byTipo[t] = (byTipo[t]||0)+(r.total||0);
+          });
+          const totalTipo = Object.values(byTipo).reduce((s,v)=>s+v,0)||1;
+          const circ = 2*Math.PI*48;
+          let off = -circ/4;
+          const dona = Object.entries(byTipo).map(([tipo,val],i) => {
+            const dash=(val/totalTipo)*circ, gap=circ-dash;
+            const seg={tipo, total:val, color:COLORS[i%COLORS.length], dash, gap, offset:-off};
+            off+=dash; return seg;
+          });
+
+          // tabla
+          const totalConfAll = totalConf||1;
+          const tabla = this.habitaciones.map(h => {
+            const rh = rs.filter(r=>r.habitacion_id===h.id);
+            const hconf = rh.filter(r=>r.estado==='confirmada');
+            const htotal = hconf.reduce((s,r)=>s+(r.total||0),0);
+            const hnoches = rh.filter(r=>r.estado!=='cancelada').reduce((s,r)=>s+(r.noches||Math.max(0,Math.round((new Date(r.checkout)-new Date(r.checkin))/86400000))||0),0);
+            return {id:h.id, nombre:h.nombre, tipo:h.tipo||'—', reservas:rh.length, noches:hnoches, total:htotal, pct:Math.round(htotal/totalConfAll*100)};
+          }).filter(r=>r.reservas>0).sort((a,b)=>b.total-a.total);
+
+          // mes actual/anterior
+          const n2 = new Date();
+          const ymAct = `${n2.getFullYear()}-${String(n2.getMonth()+1).padStart(2,'0')}`;
+          const n3 = new Date(n2.getFullYear(), n2.getMonth()-1, 1);
+          const ymAnt = `${n3.getFullYear()}-${String(n3.getMonth()+1).padStart(2,'0')}`;
+          const mesAct = this.reservas.filter(r=>r.checkin.startsWith(ymAct)&&r.estado==='confirmada').reduce((s,r)=>s+(r.total||0),0);
+          const mesAnt = this.reservas.filter(r=>r.checkin.startsWith(ymAnt)&&r.estado==='confirmada').reduce((s,r)=>s+(r.total||0),0);
+          const delta = !mesAnt ? (mesAct>0?100:0) : Math.round((mesAct-mesAnt)/mesAnt*100);
+          const mesActNombre = `${['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'][n2.getMonth()]} ${n2.getFullYear()}`;
+          const mesAntNombre = `${['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'][n3.getMonth()]} ${n3.getFullYear()}`;
+
+          // flujo de caja
+          const now2 = new Date(); now2.setHours(0,0,0,0);
+          const semanas = [];
+          for (let w=0;w<8;w++) {
+            const start = new Date(now2); start.setDate(now2.getDate()+w*7);
+            const end = new Date(start); end.setDate(start.getDate()+6);
+            const s=start.toISOString().slice(0,10), e=end.toISOString().slice(0,10);
+            const rSem = this.reservas.filter(r=>r.checkin<=e&&r.checkout>s&&r.estado!=='cancelada');
+            const calcProp = (arr) => arr.reduce((acc,r)=>{
+              const cin=r.checkin<s?s:r.checkin, cout=r.checkout>e?e:r.checkout;
+              const n=Math.max(0,Math.round((new Date(cout)-new Date(cin))/86400000));
+              const totalN=r.noches||Math.max(1,Math.round((new Date(r.checkout)-new Date(r.checkin))/86400000));
+              return acc+Math.round((r.total||0)/totalN*n);
+            },0);
+            semanas.push({label:`${start.getDate()}/${start.getMonth()+1} - ${end.getDate()}/${end.getMonth()+1}`,
+              conf:calcProp(rSem.filter(r=>r.estado==='confirmada')),
+              pend:calcProp(rSem.filter(r=>r.estado==='pendiente'))});
+          }
+          const maxSem = Math.max(...semanas.map(s=>s.conf+s.pend),1);
+          const flujo = semanas.map(s=>({...s, confPct:Math.round(s.conf/maxSem*100), pendPct:Math.round(s.pend/maxSem*100)}));
+
+          this._finCache = {
+            kpis:{ confirmado:totalConf, pendiente:totalPend, numConf:conf.length, numPend:pend.length, numCanc:canc.length, ticketProm, nochesTotal:noches, ocupPct },
+            bars, dona, tabla, mesAct, mesAnt, delta, mesActNombre, mesAntNombre, flujo,
+            maxMes: Math.max(mesAct, mesAnt)
+          };
+          return this._finCache;
+        },
+
+        finKpis()          { return this._finRecalc().kpis; },
+        finBars()          { return this._finRecalc().bars; },
+        finDonaSegments()  { return this._finRecalc().dona; },
+        finTablaHabs()     { return this._finRecalc().tabla; },
+        finMesActual()     { return this._finRecalc().mesAct; },
+        finMesAnterior()   { return this._finRecalc().mesAnt; },
+        finDeltaMes()      { return this._finRecalc().delta; },
+        finMesActualNombre()  { return this._finRecalc().mesActNombre; },
+        finMesAnteriorNombre(){ return this._finRecalc().mesAntNombre; },
+        finFlujoCaja()     { return this._finRecalc().flujo; },
+      };
+    }
+  </script>
+
+</body>
+</html>

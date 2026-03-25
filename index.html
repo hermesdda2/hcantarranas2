@@ -1,0 +1,1910 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Hotel Cantarranas — Tu escapada perfecta</title>
+  <meta name="description" content="Hotel Cantarranas, el refugio boutique en México con alberca, restaurante, club deportivo y habitaciones de lujo. Reserva directo y obtén la mejor tarifa." />
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant:ital,wght@0,400;0,500;0,600;0,700;1,400;1,600&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet" />
+
+  <!-- Tailwind CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            forest:  '#000A1C',
+            gold:    '#c9a84c',
+            'gold-light': '#e0c078',
+            ivory:   '#f9f5ef',
+            'ivory-dark': '#ede8df',
+          },
+          fontFamily: {
+            serif: ['Cormorant', 'Georgia', 'serif'],
+            sans:  ['Inter', 'system-ui', 'sans-serif'],
+          },
+        }
+      }
+    }
+  </script>
+
+  <!-- Alpine.js -->
+  <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+
+  <style>
+    html { scroll-behavior: smooth; }
+
+    /* Reduced motion */
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+    }
+
+    /* Hero overlay - Darker for readability */
+    .hero-overlay {
+      background: rgba(0, 0, 0, 0.45);
+    }
+
+    /* Slider */
+    .slide { position: absolute; inset: 0; opacity: 0; transition: opacity 1.2s ease; }
+    .slide.active { opacity: 1; }
+    .slide img { width: 100%; height: 100%; object-fit: cover; object-position: center;
+      transform: scale(1.08); transition: transform 7s ease; }
+    .slide.active img { transform: scale(1); }
+
+    /* Slide dots */
+    .dot { width: 6px; height: 6px; border-radius: 50%; background: rgba(255,255,255,0.4);
+      transition: all 0.3s ease; cursor: pointer; }
+    .dot.active { width: 24px; border-radius: 3px; background: #c9a84c; }
+
+    /* Slide caption fade */
+    .slide-caption { opacity: 0; transform: translateY(16px);
+      transition: opacity 0.7s ease 0.4s, transform 0.7s ease 0.4s; }
+    .slide.active .slide-caption { opacity: 1; transform: translateY(0); }
+
+    /* Gold divider */
+    .gold-line {
+      width: 60px; height: 1px; background: #c9a84c; display: inline-block;
+    }
+
+    /* Room card hover */
+    .room-card img { transition: transform 0.6s cubic-bezier(0.25,0.46,0.45,0.94); }
+    .room-card:hover img { transform: scale(1.05); }
+
+    /* ── NAV PILL STYLE (Confispat inspired REAL) ── */
+    .nav-floating {
+      top: 15px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 90%;
+      max-width: 1200px;
+      background: rgba(255, 255, 255, 0.8); /* Clean white glassmorphism */
+      backdrop-filter: blur(12px);
+      border-radius: 100px;
+      padding: 0 24px;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.08);
+      border: 1px solid rgba(255,255,255,0.3);
+      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .nav-floating.scrolled {
+      top: 8px;
+      width: 95%;
+      background: rgba(255, 255, 255, 0.95);
+      box-shadow: 0 6px 30px rgba(0,0,0,0.1);
+    }
+
+    /* Animate on scroll */
+    .fade-up {
+      opacity: 0;
+      transform: translateY(30px);
+      transition: opacity 0.7s ease, transform 0.7s ease;
+    }
+    .fade-up.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    /* Gold button shimmer */
+    .btn-gold {
+      position: relative; overflow: hidden; border-radius: 9999px;
+    }
+    .btn-gold::after {
+      content: '';
+      position: absolute; top: 0; left: -100%;
+      width: 60%; height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.25), transparent);
+      transition: left 0.5s ease;
+    }
+    .btn-gold:hover::after { left: 140%; }
+
+    /* ── GLOW CARD ───────────────────────────────── */
+    .glow-card {
+      position: relative;
+      overflow: hidden;
+    }
+    .glow-card .glow-spot {
+      pointer-events: none;
+      position: absolute;
+      width: 320px; height: 320px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(201,168,76,0.18) 0%, transparent 70%);
+      transform: translate(-50%, -50%);
+      opacity: 0;
+      transition: opacity 0.35s ease;
+      z-index: 5;
+    }
+    .glow-card:hover .glow-spot { opacity: 1; }
+
+    /* ── STAT COUNTER ────────────────────────────── */
+    .stat-number {
+      font-variant-numeric: tabular-nums;
+      transition: all 0.1s;
+    }
+
+    /* ── WORD REVEAL ─────────────────────────────── */
+    .reveal-word {
+      display: inline-block;
+      opacity: 0.15;
+      transition: opacity 0.4s ease, color 0.4s ease;
+    }
+    .reveal-word.lit { opacity: 1; color: #000A1C; }
+
+    /* ── LOGOS3 MARQUEE EFFECT ──────────────────── */
+    @keyframes marquee {
+      0% { transform: translateX(0); }
+      100% { transform: translateX(-50%); }
+    }
+    .animate-marquee {
+      animation: marquee 30s linear infinite;
+    }
+    .logos-mask {
+      mask-image: linear-gradient(to right, transparent, black 15%, black 85%, transparent);
+      -webkit-mask-image: linear-gradient(to right, transparent, black 15%, black 85%, transparent);
+    }
+
+    .amenity-logo {
+      height: 2rem;
+      width: auto;
+      opacity: 0.6;
+      transition: all 0.3s ease;
+      filter: grayscale(1);
+    }
+    .amenity-logo:hover {
+      opacity: 1;
+      filter: grayscale(0);
+      transform: scale(1.1);
+    }
+  </style>
+</head>
+
+<body class="bg-ivory font-sans text-forest antialiased">
+
+  <!-- ═══════════════════════════════════════
+       NAVIGATION
+  ═══════════════════════════════════════ -->
+  <nav
+    x-data="{ open: false, scrolled: false }"
+    x-init="window.addEventListener('scroll', () => { scrolled = window.scrollY > 40 })"
+    :class="scrolled ? 'nav-floating scrolled' : 'nav-floating'"
+    class="fixed z-50 transition-all duration-400"
+  >
+    <div class="px-4">
+      <div class="flex items-center justify-between h-14 sm:h-16">
+
+        <!-- Logo -->
+        <a href="#inicio" class="flex flex-col leading-none cursor-pointer">
+          <img src="Imágenes/Logo Hotel Cantarranas - Horizongtal.png" alt="Hotel Cantarranas" class="h-10 sm:h-11 w-auto object-contain" />
+        </a>
+
+        <!-- Desktop menu -->
+        <div class="hidden md:flex items-center gap-6 lg:gap-8">
+          <a href="#servicios"    class="text-[#000A1C]/80 hover:text-[#000A1C] text-[13px] tracking-widest uppercase font-semibold transition-colors duration-200 cursor-pointer">Servicios</a>
+          <a href="#habitaciones" class="text-[#000A1C]/80 hover:text-[#000A1C] text-[13px] tracking-widest uppercase font-semibold transition-colors duration-200 cursor-pointer">Habitaciones</a>
+          <a href="#restaurante"  class="text-[#000A1C]/80 hover:text-[#000A1C] text-[13px] tracking-widest uppercase font-semibold transition-colors duration-200 cursor-pointer">Restaurante</a>
+          <a href="#tours"        class="text-[#000A1C]/80 hover:text-[#000A1C] text-[13px] tracking-widest uppercase font-semibold transition-colors duration-200 cursor-pointer">Tours</a>
+          <a href="#contacto"     class="text-[#000A1C]/80 hover:text-[#000A1C] text-[13px] tracking-widest uppercase font-semibold transition-colors duration-200 cursor-pointer">Contacto</a>
+        </div>
+
+        <!-- CTA -->
+        <div class="hidden md:flex items-center gap-4">
+            <a href="tel:2382038132" class="text-[#000A1C]/60 text-xs tracking-tighter hidden lg:flex items-center gap-1 hover:text-[#000A1C] transition-colors">
+                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/></svg>
+                238-203-8132
+            </a>
+            <a
+            href="#reservar"
+            class="inline-flex items-center gap-2 bg-gold hover:bg-gold-light text-[#000A1C] text-[11px] font-bold tracking-widest uppercase px-6 py-2 rounded-xl transition-all duration-300 cursor-pointer shadow-lg shadow-gold/20"
+            >
+            Reservar
+            </a>
+        </div>
+
+        <!-- Mobile hamburger -->
+        <button @click="open = !open" class="md:hidden text-[#000A1C] p-2 cursor-pointer" aria-label="Abrir menú">
+          <svg x-show="!open" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+          <svg x-show="open" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- Mobile menu -->
+    <div x-show="open" x-transition class="md:hidden bg-forest/95 rounded-3xl mt-2 mx-4 p-6 space-y-4 shadow-2xl border border-white/10">
+      <a href="#servicios"     @click="open=false" class="block text-white/80 hover:text-gold text-sm tracking-widest uppercase font-medium cursor-pointer">Servicios</a>
+      <a href="#habitaciones"  @click="open=false" class="block text-white/80 hover:text-gold text-sm tracking-widest uppercase font-medium cursor-pointer">Habitaciones</a>
+      <a href="#restaurante"   @click="open=false" class="block text-white/80 hover:text-gold text-sm tracking-widest uppercase font-medium cursor-pointer">Restaurante</a>
+      <a href="#tours"         @click="open=false" class="block text-white/80 hover:text-gold text-sm tracking-widest uppercase font-medium cursor-pointer">Tours</a>
+      <a href="#contacto"      @click="open=false" class="block text-white/80 hover:text-gold text-sm tracking-widest uppercase font-medium cursor-pointer">Contacto</a>
+      <a href="#reservar"      @click="open=false" class="inline-block w-full text-center bg-gold text-[#000A1C] text-xs font-bold tracking-widest uppercase px-6 py-4 mt-2 cursor-pointer rounded-xl">Reservar Ahora</a>
+    </div>
+  </nav>
+
+
+  <!-- ═══════════════════════════════════════
+       HERO SLIDER
+  ═══════════════════════════════════════ -->
+  <section
+    id="inicio"
+    class="relative h-[75vh] min-h-[460px] flex items-center justify-center overflow-hidden"
+    x-data="heroSlider()"
+    x-init="init()"
+  >
+
+    <!-- SLIDES -->
+    <div class="slide" :class="{ active: current === 0 }">
+      <img src="Imágenes/slider 1.jpg" alt="Hotel Cantarranas" loading="eager" />
+    </div>
+    <div class="slide" :class="{ active: current === 1 }">
+      <img src="Imágenes/slider 2.jpg" alt="Hotel Cantarranas" loading="lazy" />
+    </div>
+    <div class="slide" :class="{ active: current === 2 }">
+      <img src="Imágenes/slider 3.jpg" alt="Hotel Cantarranas" loading="lazy" />
+    </div>
+    <div class="slide" :class="{ active: current === 3 }">
+      <img src="Imágenes/slider 4.jpg" alt="Hotel Cantarranas" loading="lazy" />
+    </div>
+
+    <!-- Overlay -->
+    <div class="hero-overlay absolute inset-0 z-10"></div>
+
+    <!-- Content -->
+    <div class="relative z-20 text-center px-4 max-w-4xl mx-auto">
+      <p class="text-white text-base sm:text-lg tracking-[0.35em] uppercase font-light mb-6" style="text-shadow: 0 1px 6px rgba(0,0,0,0.8), 0 2px 20px rgba(0,0,0,0.5);">Bienvenido al</p>
+      <h1 class="mb-4">
+        <img src="Imágenes/Logo Cantarranas - Bco.png" alt="Hotel Cantarranas" class="mx-auto h-44 sm:h-52 lg:h-60 w-auto object-contain" style="filter: drop-shadow(0 4px 24px rgba(0,0,0,0.5));" />
+      </h1>
+      <div class="flex items-center justify-center gap-4 mb-4">
+        <span class="gold-line"></span>
+        <p class="text-white text-sm tracking-[0.3em] uppercase font-medium">Tu escapada perfecta te espera</p>
+        <span class="gold-line"></span>
+      </div>
+
+      <template x-for="(slide, i) in slides" :key="i">
+        <p class="slide-caption text-white/60 text-sm font-light italic mb-8"
+           x-show="current === i" x-text="slide.caption"></p>
+      </template>
+
+      <a
+        href="#reservar"
+        class="magnetic btn-gold inline-flex items-center gap-3 bg-gold hover:bg-gold-light text-forest font-semibold text-xs tracking-widest uppercase px-10 py-4 transition-colors duration-300 cursor-pointer"
+      >
+        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+        Reserva Ahora
+      </a>
+    </div>
+
+    <!-- Prev / Next arrows -->
+    <button @click="prev()" class="absolute left-6 top-1/2 -translate-y-1/2 z-20 w-11 h-11 border border-white/30 hover:border-gold flex items-center justify-center text-white hover:text-gold transition-all duration-200 cursor-pointer" aria-label="Slide anterior">
+      <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
+    </button>
+    <button @click="next()" class="absolute right-6 top-1/2 -translate-y-1/2 z-20 w-11 h-11 border border-white/30 hover:border-gold flex items-center justify-center text-white hover:text-gold transition-all duration-200 cursor-pointer" aria-label="Slide siguiente">
+      <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+    </button>
+
+    <!-- Dots -->
+    <div class="absolute bottom-20 left-1/2 -translate-x-1/2 z-20 flex items-center gap-2">
+      <template x-for="(slide, i) in slides" :key="i">
+        <button @click="goTo(i)" :class="{ active: current === i }" class="dot" :aria-label="'Ir a slide ' + (i+1)"></button>
+      </template>
+    </div>
+
+    <!-- Scroll indicator -->
+    <div class="absolute bottom-8 left-1/2 -translate-x-1/2 z-20 flex flex-col items-center gap-2 text-white/50">
+      <span class="text-xs tracking-widest uppercase">Scroll</span>
+      <svg class="w-4 h-4 animate-bounce" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+    </div>
+  </section>
+  
+  <!-- ═══════════════════════════════════════
+       MARQUEE BAR (Confispat style)
+  ═══════════════════════════════════════ -->
+  <div x-data="{}" class="bg-[#000A1C] py-2 overflow-hidden border-y border-white/5 relative z-30">
+    <div class="flex animate-marquee whitespace-nowrap items-center gap-12 sm:gap-16">
+      <!-- Repetido 4 veces para asegurar que no haya saltos -->
+      <template x-for="i in 4">
+        <div class="flex items-center gap-12 sm:gap-16">
+          <div class="flex items-center gap-2">
+            <span class="text-gold text-lg">✦</span>
+            <span class="text-white/90 text-[11px] sm:text-xs tracking-[0.2em] uppercase font-medium">Alberca Climatizada</span>
+          </div>
+          <div class="flex items-center gap-2">
+            <span class="text-gold text-lg">✦</span>
+            <span class="text-white/90 text-[11px] sm:text-xs tracking-[0.2em] uppercase font-medium">Restaurante Gourmet</span>
+          </div>
+          <div class="flex items-center gap-2">
+            <span class="text-gold text-lg">✦</span>
+            <span class="text-white/90 text-[11px] sm:text-xs tracking-[0.2em] uppercase font-medium">Club Deportivo</span>
+          </div>
+          <div class="flex items-center gap-2">
+            <span class="text-gold text-lg">✦</span>
+            <span class="text-white/90 text-[11px] sm:text-xs tracking-[0.2em] uppercase font-medium">Suite Jacuzzi</span>
+          </div>
+          <div class="flex items-center gap-2">
+            <span class="text-gold text-lg">✦</span>
+            <span class="text-white/90 text-[11px] sm:text-xs tracking-[0.2em] uppercase font-medium">Wifi Alta Velocidad</span>
+          </div>
+          <div class="flex items-center gap-2">
+            <span class="text-gold text-lg">✦</span>
+            <span class="text-white/90 text-[11px] sm:text-xs tracking-[0.2em] uppercase font-medium">Canchas de Tenis</span>
+          </div>
+          <div class="flex items-center gap-2">
+            <span class="text-gold text-lg">✦</span>
+            <span class="text-white/90 text-[11px] sm:text-xs tracking-[0.2em] uppercase font-medium">Estacionamiento Privado</span>
+          </div>
+        </div>
+      </template>
+    </div>
+  </div>
+
+
+
+
+  <!-- ═══════════════════════════════════════
+       BOOKING WIZARD — 3 pasos
+  ═══════════════════════════════════════ -->
+  <section id="reservar" class="bg-ivory-dark py-20 px-4 relative z-30" x-data="wizard()">
+    <div class="max-w-4xl mx-auto">
+
+      <!-- Header -->
+      <div class="text-center mb-12 fade-up">
+        <p class="text-gold text-xs tracking-[0.4em] uppercase font-light mb-3">Disponibilidad en tiempo real</p>
+        <h2 class="font-serif text-4xl font-semibold text-forest">Reserva Tu Estancia</h2>
+      </div>
+
+      <!-- Progress bar -->
+      <div class="flex items-center justify-center mb-10 fade-up">
+        <template x-for="(label, i) in ['Fechas','Habitación','Tus datos']" :key="i">
+          <div class="flex items-center">
+            <div class="flex flex-col items-center gap-1">
+              <div class="w-9 h-9 rounded-full flex items-center justify-center text-xs font-semibold transition-all duration-300 border-2"
+                :class="step > i+1 ? 'bg-forest border-forest text-white' : step === i+1 ? 'bg-gold border-gold text-forest' : 'bg-white border-forest/20 text-forest/30'">
+                <span x-show="step <= i+1" x-text="i+1"></span>
+                <svg x-show="step > i+1" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+              </div>
+              <span class="text-xs font-light tracking-wide hidden sm:block"
+                :class="step === i+1 ? 'text-forest font-medium' : 'text-forest/40'"
+                x-text="label"></span>
+            </div>
+            <div x-show="i < 2" class="w-16 sm:w-24 h-px mx-2 transition-all duration-500"
+              :class="step > i+1 ? 'bg-forest' : 'bg-forest/15'"></div>
+          </div>
+        </template>
+      </div>
+
+      <!-- CARD principal -->
+      <div class="bg-white shadow-2xl overflow-visible relative fade-up">
+
+        <!-- ══ PASO 1: FECHAS Y HUÉSPEDES ══ -->
+        <div x-show="step===1" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-x-4" x-transition:enter-end="opacity-100 translate-x-0">
+          <div class="p-8 md:p-10">
+            <h3 class="font-serif text-2xl text-forest mb-1">¿Cuándo nos visitas?</h3>
+            <p class="text-forest/50 text-sm font-light mb-8">Selecciona tus fechas y veremos qué habitaciones están disponibles.</p>
+
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-8">
+              <!-- Llegada -->
+              <div class="flex flex-col gap-2 relative">
+                <label class="text-xs tracking-widest uppercase text-forest/50 font-medium">Llegada</label>
+                <button @click="toggleCal('checkin')" type="button"
+                  class="border px-4 py-3.5 text-left text-sm cursor-pointer flex items-center justify-between transition-colors"
+                  :class="checkin ? 'border-forest/40 text-forest' : 'border-forest/20 text-forest/40 hover:border-gold'">
+                  <span x-text="checkin ? fmtDate(checkin) : 'dd / mm / aaaa'"></span>
+                  <svg class="w-4 h-4 text-gold flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                </button>
+                <div x-show="openCal==='checkin'" @click.outside="openCal=''" x-transition class="absolute top-full left-0 z-50 mt-1 bg-white shadow-2xl border border-forest/10 p-4 w-72">
+                  <div x-data="miniCal()" x-init="initFrom(checkin)">
+                    <div class="flex items-center justify-between mb-3">
+                      <button @click="pm()" type="button" class="w-8 h-8 flex items-center justify-center hover:text-gold cursor-pointer"><svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg></button>
+                      <span class="font-serif text-forest text-sm font-semibold capitalize" x-text="mName()+' '+yr"></span>
+                      <button @click="nm()" type="button" class="w-8 h-8 flex items-center justify-center hover:text-gold cursor-pointer"><svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg></button>
+                    </div>
+                    <div class="grid grid-cols-7 mb-1">
+                      <template x-for="d in ['D','L','M','M','J','V','S']"><div class="text-center text-xs text-forest/40 py-1" x-text="d"></div></template>
+                    </div>
+                    <div class="grid grid-cols-7 gap-y-1">
+                      <template x-for="b in fd()"><div></div></template>
+                      <template x-for="day in dim()">
+                        <button type="button" @click="pick(day, (iso)=>{ checkin=iso; if(checkout && checkout<=iso) checkout=''; openCal=''; })"
+                          :disabled="isPast(day)"
+                          :class="{ 'bg-gold text-forest font-semibold': checkin===iso(day), 'text-forest/25 cursor-not-allowed': isPast(day), 'hover:bg-ivory-dark cursor-pointer text-forest': !isPast(day) && checkin!==iso(day) }"
+                          class="h-8 w-8 mx-auto flex items-center justify-center text-xs rounded-full transition-colors" x-text="day"></button>
+                      </template>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Salida -->
+              <div class="flex flex-col gap-2 relative">
+                <label class="text-xs tracking-widest uppercase text-forest/50 font-medium">Salida</label>
+                <button @click="checkin && toggleCal('checkout')" type="button"
+                  class="border px-4 py-3.5 text-left text-sm flex items-center justify-between transition-colors"
+                  :class="!checkin ? 'border-forest/10 text-forest/20 cursor-not-allowed' : checkout ? 'border-forest/40 text-forest cursor-pointer' : 'border-forest/20 text-forest/40 hover:border-gold cursor-pointer'">
+                  <span x-text="checkout ? fmtDate(checkout) : 'dd / mm / aaaa'"></span>
+                  <svg class="w-4 h-4 text-gold flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                </button>
+                <div x-show="openCal==='checkout'" @click.outside="openCal=''" x-transition class="absolute top-full left-0 z-50 mt-1 bg-white shadow-2xl border border-forest/10 p-4 w-72">
+                  <div x-data="miniCal()" x-init="initFrom(checkout || checkin)">
+                    <div class="flex items-center justify-between mb-3">
+                      <button @click="pm()" type="button" class="w-8 h-8 flex items-center justify-center hover:text-gold cursor-pointer"><svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg></button>
+                      <span class="font-serif text-forest text-sm font-semibold capitalize" x-text="mName()+' '+yr"></span>
+                      <button @click="nm()" type="button" class="w-8 h-8 flex items-center justify-center hover:text-gold cursor-pointer"><svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg></button>
+                    </div>
+                    <div class="grid grid-cols-7 mb-1">
+                      <template x-for="d in ['D','L','M','M','J','V','S']"><div class="text-center text-xs text-forest/40 py-1" x-text="d"></div></template>
+                    </div>
+                    <div class="grid grid-cols-7 gap-y-1">
+                      <template x-for="b in fd()"><div></div></template>
+                      <template x-for="day in dim()">
+                        <button type="button" @click="pick(day, (iso)=>{ checkout=iso; openCal=''; })"
+                          :disabled="isPast(day) || iso(day) <= checkin"
+                          :class="{ 'bg-gold text-forest font-semibold': checkout===iso(day), 'text-forest/25 cursor-not-allowed': isPast(day) || iso(day)<=checkin, 'hover:bg-ivory-dark cursor-pointer text-forest': !isPast(day) && iso(day)>checkin && checkout!==iso(day) }"
+                          class="h-8 w-8 mx-auto flex items-center justify-center text-xs rounded-full transition-colors" x-text="day"></button>
+                      </template>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Huéspedes -->
+              <div class="flex flex-col gap-2">
+                <label class="text-xs tracking-widest uppercase text-forest/50 font-medium">Huéspedes</label>
+                <div class="border border-forest/20 px-4 py-3.5 flex items-center justify-between hover:border-gold transition-colors">
+                  <span class="text-forest text-sm" x-text="guests + (guests===1?' Huésped':' Huéspedes')"></span>
+                  <div class="flex items-center gap-3">
+                    <button @click="guests>1 && guests--" type="button" class="w-7 h-7 rounded-full border border-forest/20 flex items-center justify-center hover:border-gold hover:text-gold transition-colors cursor-pointer text-forest/60">−</button>
+                    <span class="text-forest font-semibold text-sm w-4 text-center" x-text="guests"></span>
+                    <button @click="guests<6 && guests++" type="button" class="w-7 h-7 rounded-full border border-forest/20 flex items-center justify-center hover:border-gold hover:text-gold transition-colors cursor-pointer text-forest/60">+</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Resumen noches -->
+            <div x-show="checkin && checkout" x-transition class="bg-forest/5 border border-forest/10 px-5 py-3 mb-6 flex items-center gap-3">
+              <svg class="w-4 h-4 text-gold flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/></svg>
+              <p class="text-forest/70 text-sm font-light" x-text="nights() + (nights()===1?' noche':' noches') + ' · Del ' + fmtDate(checkin) + ' al ' + fmtDate(checkout)"></p>
+            </div>
+
+            <!-- Error -->
+            <p x-show="error" x-text="error" class="text-red-500 text-sm mb-4 flex items-center gap-2">
+              <svg class="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+              <span x-text="error"></span>
+            </p>
+
+            <div class="flex justify-end">
+              <button @click="buscarDisponibilidad()" :disabled="!checkin||!checkout||loading"
+                class="btn-gold bg-gold hover:bg-gold-light text-forest font-semibold text-xs tracking-widest uppercase px-10 py-4 transition-colors duration-300 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-3">
+                <span x-show="loading" class="w-4 h-4 border-2 border-forest/30 border-t-forest rounded-full animate-spin"></span>
+                <span x-text="loading ? 'Buscando...' : 'Ver disponibilidad'"></span>
+                <svg x-show="!loading" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- ══ PASO 2: ELEGIR HABITACIÓN ══ -->
+        <div x-show="step===2" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-x-4" x-transition:enter-end="opacity-100 translate-x-0">
+          <div class="p-8 md:p-10">
+            <div class="flex items-start justify-between mb-2">
+              <div>
+                <h3 class="font-serif text-2xl text-forest mb-1">Elige tu habitación</h3>
+                <p class="text-forest/50 text-sm font-light">
+                  <span x-text="disponibles.length"></span> habitaciones disponibles ·
+                  <span x-text="fmtDate(checkin) + ' → ' + fmtDate(checkout)"></span> ·
+                  <span x-text="nights() + ' noche' + (nights()>1?'s':'')"></span>
+                </p>
+              </div>
+              <button @click="step=1; habitacion=null" type="button" class="text-forest/40 hover:text-gold text-xs tracking-widest uppercase cursor-pointer transition-colors flex items-center gap-1 mt-1">
+                <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
+                Cambiar fechas
+              </button>
+            </div>
+
+            <!-- Sin disponibilidad -->
+            <div x-show="disponibles.length===0" class="py-16 text-center">
+              <svg class="w-12 h-12 text-forest/20 mx-auto mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1"><path stroke-linecap="round" stroke-linejoin="round" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+              <p class="font-serif text-xl text-forest/50 mb-2">Sin disponibilidad</p>
+              <p class="text-forest/40 text-sm font-light mb-6">No hay habitaciones libres para esas fechas. Prueba con otras fechas.</p>
+              <button @click="step=1" class="btn-gold bg-gold hover:bg-gold-light text-forest text-xs font-semibold tracking-widest uppercase px-8 py-3 cursor-pointer">Cambiar fechas</button>
+            </div>
+
+            <!-- Grid habitaciones -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-6">
+              <template x-for="h in disponibles" :key="h.id">
+                <div @click="habitacion=h"
+                  class="relative border-2 cursor-pointer transition-all duration-200 overflow-hidden group"
+                  :class="habitacion && habitacion.id===h.id ? 'border-gold shadow-lg' : 'border-forest/10 hover:border-gold/50 hover:shadow-md'">
+
+                  <!-- Badge seleccionado -->
+                  <div x-show="habitacion && habitacion.id===h.id"
+                    class="absolute top-3 right-3 z-10 bg-gold text-forest text-xs font-semibold px-2 py-0.5 rounded-full">
+                    ✓ Seleccionada
+                  </div>
+
+                  <div class="h-40 overflow-hidden">
+                    <img :src="h.imagen" :alt="h.nombre" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                  </div>
+                  <div class="p-4">
+                    <div class="flex items-start justify-between mb-1">
+                      <div>
+                        <p class="text-gold text-xs tracking-widest uppercase font-light" x-text="h.tipo"></p>
+                        <h4 class="font-serif text-base font-semibold text-forest leading-tight" x-text="h.nombre"></h4>
+                      </div>
+                      <div class="text-right flex-shrink-0 ml-2">
+                        <p class="font-serif text-xl font-semibold text-forest" x-text="'$'+h.precio.toLocaleString()"></p>
+                        <p class="text-forest/40 text-xs">/noche</p>
+                      </div>
+                    </div>
+                    <p class="text-forest/55 text-xs font-light leading-relaxed mt-2 mb-3" x-text="h.descripcion"></p>
+                    <!-- Amenidades -->
+                    <div class="flex flex-wrap gap-1">
+                      <template x-for="a in h.amenidades.slice(0,4)" :key="a">
+                        <span class="text-xs bg-ivory px-2 py-0.5 text-forest/60" x-text="a"></span>
+                      </template>
+                    </div>
+                    <!-- Total -->
+                    <div x-show="habitacion && habitacion.id===h.id" class="mt-3 pt-3 border-t border-gold/20">
+                      <div class="flex justify-between items-center">
+                        <span class="text-xs text-forest/50 font-light" x-text="nights()+' noche'+(nights()>1?'s':'')"></span>
+                        <span class="font-serif text-base font-semibold text-forest" x-text="'Total: $'+(h.precio*nights()).toLocaleString()"></span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </template>
+            </div>
+
+            <div x-show="disponibles.length > 0" class="flex justify-end mt-8">
+              <button @click="step=3" :disabled="!habitacion"
+                class="btn-gold bg-gold hover:bg-gold-light text-forest font-semibold text-xs tracking-widest uppercase px-10 py-4 transition-colors duration-300 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-3">
+                Continuar
+                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- ══ PASO 3: DATOS DEL HUÉSPED ══ -->
+        <div x-show="step===3" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-x-4" x-transition:enter-end="opacity-100 translate-x-0">
+          <div class="p-8 md:p-10">
+            <div class="flex items-start justify-between mb-6">
+              <div>
+                <h3 class="font-serif text-2xl text-forest mb-1">Tus datos</h3>
+                <p class="text-forest/50 text-sm font-light">Casi listo — confirma tu información para completar la reserva.</p>
+              </div>
+              <button @click="step=2" type="button" class="text-forest/40 hover:text-gold text-xs tracking-widest uppercase cursor-pointer transition-colors flex items-center gap-1 mt-1">
+                <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
+                Cambiar habitación
+              </button>
+            </div>
+
+            <!-- Resumen de reserva -->
+            <div class="bg-forest text-white p-5 mb-7 flex flex-col sm:flex-row gap-4 items-start sm:items-center">
+              <img :src="habitacion ? habitacion.imagen : ''" class="w-20 h-16 object-cover flex-shrink-0 hidden sm:block" />
+              <div class="flex-1 min-w-0">
+                <p class="text-gold text-xs tracking-widest uppercase font-light mb-0.5" x-text="habitacion ? habitacion.tipo : ''"></p>
+                <p class="font-serif text-lg font-semibold truncate" x-text="habitacion ? habitacion.nombre : ''"></p>
+                <p class="text-white/60 text-xs font-light mt-0.5" x-text="fmtDate(checkin) + ' → ' + fmtDate(checkout) + ' · ' + nights() + ' noche'+(nights()>1?'s'+'':'')+' · '+guests+' huésped'+(guests>1?'es':'')"></p>
+              </div>
+              <div class="text-right flex-shrink-0">
+                <p class="text-white/50 text-xs font-light">Total</p>
+                <p class="font-serif text-2xl font-semibold text-gold" x-text="habitacion ? '$'+(habitacion.precio*nights()).toLocaleString() : ''"></p>
+                <p class="text-white/40 text-xs" x-text="habitacion ? '$'+habitacion.precio.toLocaleString()+'/noche' : ''"></p>
+              </div>
+            </div>
+
+            <!-- Formulario -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-5 mb-5">
+              <div class="flex flex-col gap-1.5">
+                <label class="text-xs tracking-widest uppercase text-forest/50 font-medium">Nombre completo *</label>
+                <input x-model="form.nombre" type="text" placeholder="Juan Pérez"
+                  class="border border-forest/20 px-4 py-3 text-sm text-forest placeholder-forest/30 focus:outline-none focus:border-gold transition-colors" />
+              </div>
+              <div class="flex flex-col gap-1.5">
+                <label class="text-xs tracking-widest uppercase text-forest/50 font-medium">Teléfono *</label>
+                <input x-model="form.telefono" type="tel" placeholder="223 000 0000"
+                  class="border border-forest/20 px-4 py-3 text-sm text-forest placeholder-forest/30 focus:outline-none focus:border-gold transition-colors" />
+              </div>
+              <div class="flex flex-col gap-1.5 sm:col-span-2">
+                <label class="text-xs tracking-widest uppercase text-forest/50 font-medium">Correo electrónico</label>
+                <input x-model="form.email" type="email" placeholder="tu@correo.com"
+                  class="border border-forest/20 px-4 py-3 text-sm text-forest placeholder-forest/30 focus:outline-none focus:border-gold transition-colors" />
+              </div>
+              <div class="flex flex-col gap-1.5 sm:col-span-2">
+                <label class="text-xs tracking-widest uppercase text-forest/50 font-medium">Notas o peticiones especiales</label>
+                <textarea x-model="form.notas" rows="3" placeholder="Llegada tarde, cuna, aniversario…"
+                  class="border border-forest/20 px-4 py-3 text-sm text-forest placeholder-forest/30 focus:outline-none focus:border-gold transition-colors resize-none"></textarea>
+              </div>
+            </div>
+
+            <!-- Error -->
+            <p x-show="error" class="text-red-500 text-sm mb-4 flex items-center gap-2">
+              <svg class="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+              <span x-text="error"></span>
+            </p>
+
+            <div class="flex justify-end">
+              <button @click="confirmarReserva()" :disabled="loading"
+                class="btn-gold bg-gold hover:bg-gold-light text-forest font-semibold text-xs tracking-widest uppercase px-10 py-4 transition-colors duration-300 cursor-pointer disabled:opacity-50 flex items-center gap-3">
+                <span x-show="loading" class="w-4 h-4 border-2 border-forest/30 border-t-forest rounded-full animate-spin"></span>
+                <svg x-show="!loading" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                <span x-text="loading ? 'Procesando...' : 'Confirmar reserva'"></span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- ══ PASO 4: CONFIRMACIÓN ══ -->
+        <div x-show="step===4" x-transition:enter="transition ease-out duration-500" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100">
+          <div class="p-8 md:p-12 text-center">
+            <div class="w-16 h-16 rounded-full bg-green-50 border-2 border-green-400 flex items-center justify-center mx-auto mb-6">
+              <svg class="w-8 h-8 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+            </div>
+            <h3 class="font-serif text-3xl font-semibold text-forest mb-3">¡Reserva recibida!</h3>
+            <p class="text-forest/60 font-light mb-8 max-w-md mx-auto">Tu solicitud está en revisión. El hotel confirmará tu reserva en breve. Guarda tu número de reserva:</p>
+
+            <div class="inline-block bg-forest text-gold font-mono text-xl font-semibold px-8 py-4 mb-8" x-text="'#'+reservaId"></div>
+
+            <div class="bg-ivory-dark p-6 text-left max-w-sm mx-auto mb-8">
+              <div class="flex justify-between items-center mb-2">
+                <span class="text-xs text-forest/50 uppercase tracking-widest">Habitación</span>
+                <span class="text-sm font-medium text-forest" x-text="habitacion ? habitacion.nombre : ''"></span>
+              </div>
+              <div class="flex justify-between items-center mb-2">
+                <span class="text-xs text-forest/50 uppercase tracking-widest">Fechas</span>
+                <span class="text-sm font-medium text-forest" x-text="fmtDate(checkin)+' → '+fmtDate(checkout)"></span>
+              </div>
+              <div class="flex justify-between items-center mb-2">
+                <span class="text-xs text-forest/50 uppercase tracking-widest">Huéspedes</span>
+                <span class="text-sm font-medium text-forest" x-text="guests"></span>
+              </div>
+              <div class="flex justify-between items-center pt-3 border-t border-forest/10">
+                <span class="text-xs text-forest/50 uppercase tracking-widest">Total</span>
+                <span class="font-serif text-xl font-semibold text-forest" x-text="habitacion ? '$'+(habitacion.precio*nights()).toLocaleString() : ''"></span>
+              </div>
+            </div>
+
+            <button @click="resetWizard()" class="text-gold text-xs tracking-widest uppercase font-light hover:text-gold-light transition-colors cursor-pointer">
+              Hacer otra reserva →
+            </button>
+          </div>
+        </div>
+
+      </div><!-- /card -->
+    </div>
+  </section>
+
+
+  <!-- ═══════════════════════════════════════
+       HABITACIONES
+  ═══════════════════════════════════════ -->
+  <section id="habitaciones" class="py-24 px-4 bg-ivory relative z-10">
+    <div class="max-w-7xl mx-auto">
+
+      <!-- Header -->
+      <div class="text-center mb-16 fade-up">
+        <p class="text-gold text-xs tracking-[0.4em] uppercase font-light mb-3">Alojamiento</p>
+        <h2 class="font-serif text-5xl font-semibold text-forest mb-4">Nuestras Habitaciones</h2>
+        <div class="flex items-center justify-center gap-4">
+          <span class="gold-line"></span>
+          <p class="text-forest/60 text-sm font-light">Confort y elegancia en cada detalle</p>
+          <span class="gold-line"></span>
+        </div>
+      </div>
+
+      <!-- Grid -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+
+        <!-- Habitación Standard -->
+        <div class="room-card glow-card group bg-white overflow-hidden shadow-md hover:shadow-xl transition-shadow duration-400 fade-up cursor-pointer"><div class="glow-spot"></div>
+          <div class="overflow-hidden h-56">
+            <img src="https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=600&q=80" alt="Habitación Standard" class="w-full h-full object-cover" loading="lazy" />
+          </div>
+          <div class="p-6">
+            <p class="text-gold text-xs tracking-widest uppercase font-light mb-1">Estándar</p>
+            <h3 class="font-serif text-xl font-semibold text-forest mb-2">Habitación Standard</h3>
+            <p class="text-forest/60 text-sm font-light leading-relaxed mb-4">Comodidad esencial con todas las amenidades para una estancia perfecta.</p>
+            <a href="habitaciones.html?room=standard" class="inline-flex items-center gap-2 text-gold text-xs tracking-widest uppercase font-medium hover:gap-3 transition-all duration-200 cursor-pointer">
+              Ver detalles
+              <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+            </a>
+          </div>
+        </div>
+
+        <!-- Habitación Deluxe -->
+        <div class="room-card glow-card group bg-white overflow-hidden shadow-md hover:shadow-xl transition-shadow duration-400 fade-up cursor-pointer"><div class="glow-spot"></div>
+          <div class="overflow-hidden h-56">
+            <img src="https://images.unsplash.com/photo-1618773928121-c32242e63f39?w=600&q=80" alt="Habitación Deluxe" class="w-full h-full object-cover" loading="lazy" />
+          </div>
+          <div class="p-6">
+            <p class="text-gold text-xs tracking-widest uppercase font-light mb-1">Deluxe</p>
+            <h3 class="font-serif text-xl font-semibold text-forest mb-2">Habitación Deluxe</h3>
+            <p class="text-forest/60 text-sm font-light leading-relaxed mb-4">Espacios amplios con decoración refinada y vistas privilegiadas al jardín.</p>
+            <a href="habitaciones.html?room=deluxe" class="inline-flex items-center gap-2 text-gold text-xs tracking-widest uppercase font-medium hover:gap-3 transition-all duration-200 cursor-pointer">
+              Ver detalles
+              <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+            </a>
+          </div>
+        </div>
+
+        <!-- Suite -->
+        <div class="room-card glow-card group bg-white overflow-hidden shadow-md hover:shadow-xl transition-shadow duration-400 fade-up cursor-pointer"><div class="glow-spot"></div>
+          <div class="overflow-hidden h-56">
+            <img src="https://images.unsplash.com/photo-1590490360182-c33d57733427?w=600&q=80" alt="Suite" class="w-full h-full object-cover" loading="lazy" />
+          </div>
+          <div class="p-6">
+            <p class="text-gold text-xs tracking-widest uppercase font-light mb-1">Suite</p>
+            <h3 class="font-serif text-xl font-semibold text-forest mb-2">Suite Cantarranas</h3>
+            <p class="text-forest/60 text-sm font-light leading-relaxed mb-4">Lujo y privacidad en nuestra suite insignia con sala de estar independiente.</p>
+            <a href="habitaciones.html?room=suite" class="inline-flex items-center gap-2 text-gold text-xs tracking-widest uppercase font-medium hover:gap-3 transition-all duration-200 cursor-pointer">
+              Ver detalles
+              <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+            </a>
+          </div>
+        </div>
+
+        <!-- Triple -->
+        <div class="room-card glow-card group bg-white overflow-hidden shadow-md hover:shadow-xl transition-shadow duration-400 fade-up cursor-pointer"><div class="glow-spot"></div>
+          <div class="overflow-hidden h-56">
+            <img src="https://images.unsplash.com/photo-1596394516093-501ba68a0ba6?w=600&q=80" alt="Habitación Triple" class="w-full h-full object-cover" loading="lazy" />
+          </div>
+          <div class="p-6">
+            <p class="text-gold text-xs tracking-widest uppercase font-light mb-1">Familiar</p>
+            <h3 class="font-serif text-xl font-semibold text-forest mb-2">Habitación Triple</h3>
+            <p class="text-forest/60 text-sm font-light leading-relaxed mb-4">Ideal para familias o grupos, con capacidad para tres huéspedes en pleno confort.</p>
+            <a href="habitaciones.html?room=triple" class="inline-flex items-center gap-2 text-gold text-xs tracking-widest uppercase font-medium hover:gap-3 transition-all duration-200 cursor-pointer">
+              Ver detalles
+              <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+            </a>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+
+  <!-- ═══════════════════════════════════════
+       STATS — números animados
+  ═══════════════════════════════════════ -->
+  <section id="stats" class="py-24 px-4 bg-ivory-dark overflow-hidden border-y border-forest/5">
+    <div class="max-w-6xl mx-auto">
+
+      <!-- Word reveal quote -->
+      <div class="text-center mb-20 fade-up">
+        <p id="reveal-text" class="font-serif text-2xl md:text-3xl lg:text-4xl font-light text-[#000A1C] leading-relaxed max-w-3xl mx-auto px-4 opacity-30">
+        </p>
+      </div>
+
+      <!-- Stat counters -->
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-12 text-center">
+
+        <div class="fade-up stat-item" data-target="15" data-suffix="+" data-label="Años de hospitalidad">
+          <div class="font-serif text-6xl md:text-7xl font-semibold text-forest mb-2">
+            <span class="stat-number">0</span><span class="text-forest/30">+</span>
+          </div>
+          <div class="gold-line mx-auto mb-3"></div>
+          <p class="text-forest/50 text-xs tracking-widest uppercase font-light">Años de hospitalidad</p>
+        </div>
+
+        <div class="fade-up stat-item" data-target="40" data-suffix="+" data-label="Habitaciones">
+          <div class="font-serif text-6xl md:text-7xl font-semibold text-gold mb-2">
+            <span class="stat-number">0</span><span class="text-gold/70">+</span>
+          </div>
+          <div class="gold-line mx-auto mb-3"></div>
+          <p class="text-forest/50 text-xs tracking-widest uppercase font-light">Habitaciones</p>
+        </div>
+
+        <div class="fade-up stat-item" data-target="98" data-suffix="%" data-label="Huéspedes satisfechos">
+          <div class="font-serif text-6xl md:text-7xl font-semibold text-gold mb-2">
+            <span class="stat-number">0</span><span class="text-gold/70">%</span>
+          </div>
+          <div class="gold-line mx-auto mb-3"></div>
+          <p class="text-forest/50 text-xs tracking-widest uppercase font-light">Huéspedes satisfechos</p>
+        </div>
+
+        <div class="fade-up stat-item" data-target="4" data-suffix=".1★" data-label="Calificación Google">
+          <div class="font-serif text-6xl md:text-7xl font-semibold text-gold mb-2">
+            <span class="stat-number">0</span><span class="text-gold/70">.1★</span>
+          </div>
+          <div class="gold-line mx-auto mb-3"></div>
+          <p class="text-forest/50 text-xs tracking-widest uppercase font-light">Calificación Google</p>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+
+  <!-- ═══════════════════════════════════════
+       AMENITIES LOGOS3 MARQUEE
+  ═══════════════════════════════════════ -->
+  <section id="servicios" class="bg-ivory py-24 px-4 border-y border-forest/5 overflow-hidden">
+    <div class="max-w-7xl mx-auto">
+      
+      <div class="text-center mb-16 fade-up">
+        <p class="text-[#000A1C] text-xs tracking-[0.4em] uppercase font-light mb-3">Servicios</p>
+        <h2 class="font-serif text-5xl font-semibold text-[#000A1C]">Comodidades de Clase Mundial</h2>
+      </div>
+
+      <div class="relative w-full overflow-hidden logos-mask">
+        <!-- Mask Overlays -->
+        <div class="absolute inset-y-0 left-0 w-24 bg-gradient-to-r from-ivory to-transparent z-10 pointer-events-none"></div>
+        <div class="absolute inset-y-0 right-0 w-24 bg-gradient-to-l from-ivory to-transparent z-10 pointer-events-none"></div>
+
+        <div class="flex animate-marquee items-center min-w-full gap-24 py-10 w-max">
+          <!-- Amenity Set 1 -->
+          <div class="flex items-center gap-24">
+            <!-- WiFi -->
+            <div class="flex flex-col items-center gap-4 cursor-default">
+              <div class="relative w-16 h-16 rounded-full border border-forest/10 flex items-center justify-center">
+                <svg class="w-8 h-8 text-forest/40" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.2"><path stroke-linecap="round" stroke-linejoin="round" d="M8.111 16.404a5.5 5.5 0 017.778 0M12 20h.01m-7.08-7.071c3.904-3.905 10.236-3.905 14.141 0M1.394 9.393c5.857-5.857 15.355-5.857 21.213 0"/></svg>
+              </div>
+              <span class="font-serif text-sm font-light tracking-wide text-[#000A1C] whitespace-nowrap">WiFi Gratuito</span>
+            </div>
+            <!-- Desayuno -->
+            <div class="flex flex-col items-center gap-4 cursor-default">
+              <div class="relative w-16 h-16 rounded-full border border-gold/40 flex items-center justify-center">
+                <svg class="w-8 h-8 text-gold" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+              </div>
+              <span class="font-serif text-sm font-light tracking-wide text-[#000A1C] whitespace-nowrap">Desayuno Incluido</span>
+            </div>
+            <!-- Restaurante -->
+            <div class="flex flex-col items-center gap-4 cursor-default">
+              <div class="relative w-16 h-16 rounded-full border border-gold/40 flex items-center justify-center">
+                <svg class="w-8 h-8 text-gold" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
+              </div>
+              <span class="font-serif text-sm font-light tracking-wide text-[#000A1C] whitespace-nowrap">Restaurante</span>
+            </div>
+            <!-- Club Deportivo -->
+            <div class="flex flex-col items-center gap-4 cursor-default">
+              <div class="relative w-16 h-16 rounded-full border border-gold/40 flex items-center justify-center">
+                <svg class="w-8 h-8 text-gold" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064"/></svg>
+              </div>
+              <span class="font-serif text-sm font-light tracking-wide text-[#000A1C] whitespace-nowrap">Club Deportivo</span>
+            </div>
+            <!-- Clima Individual -->
+            <div class="flex flex-col items-center gap-4 cursor-default">
+              <div class="relative w-16 h-16 rounded-full border border-gold/40 flex items-center justify-center">
+                <svg class="w-8 h-8 text-gold" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3v1m0 16v1M3 12h1m16 0h1m-2.636-7.364l-.707.707M6.343 17.657l-.707.707m12.728 0l-.707-.707M6.343 6.343l-.707-.707M12 8a4 4 0 100 8 4 4 0 000-8z"/></svg>
+              </div>
+              <span class="font-serif text-sm font-light tracking-wide text-[#000A1C] whitespace-nowrap">Clima Individual</span>
+            </div>
+          </div>
+
+          <!-- Amenity Set 2 -->
+          <div class="flex items-center gap-24">
+            <!-- WiFi -->
+            <div class="flex flex-col items-center gap-4 cursor-default">
+              <div class="relative w-16 h-16 rounded-full border border-forest/10 flex items-center justify-center">
+                <svg class="w-8 h-8 text-forest/40" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.2"><path stroke-linecap="round" stroke-linejoin="round" d="M8.111 16.404a5.5 5.5 0 017.778 0M12 20h.01m-7.08-7.071c3.904-3.905 10.236-3.905 14.141 0M1.394 9.393c5.857-5.857 15.355-5.857 21.213 0"/></svg>
+              </div>
+              <span class="font-serif text-sm font-light tracking-wide text-[#000A1C] whitespace-nowrap">WiFi Gratuito</span>
+            </div>
+            <!-- Desayuno -->
+            <div class="flex flex-col items-center gap-4 cursor-default">
+              <div class="relative w-16 h-16 rounded-full border border-gold/40 flex items-center justify-center">
+                <svg class="w-8 h-8 text-gold" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+              </div>
+              <span class="font-serif text-sm font-light tracking-wide text-[#000A1C] whitespace-nowrap">Desayuno Incluido</span>
+            </div>
+            <!-- Restaurante -->
+            <div class="flex flex-col items-center gap-4 cursor-default">
+              <div class="relative w-16 h-16 rounded-full border border-gold/40 flex items-center justify-center">
+                <svg class="w-8 h-8 text-gold" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
+              </div>
+              <span class="font-serif text-sm font-light tracking-wide text-[#000A1C] whitespace-nowrap">Restaurante</span>
+            </div>
+            <!-- Club Deportivo -->
+            <div class="flex flex-col items-center gap-4 cursor-default">
+              <div class="relative w-16 h-16 rounded-full border border-gold/40 flex items-center justify-center">
+                <svg class="w-8 h-8 text-gold" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064"/></svg>
+              </div>
+              <span class="font-serif text-sm font-light tracking-wide text-[#000A1C] whitespace-nowrap">Club Deportivo</span>
+            </div>
+            <!-- Clima Individual -->
+            <div class="flex flex-col items-center gap-4 cursor-default">
+              <div class="relative w-16 h-16 rounded-full border border-gold/40 flex items-center justify-center">
+                <svg class="w-8 h-8 text-gold" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3v1m0 16v1M3 12h1m16 0h1m-2.636-7.364l-.707.707M6.343 17.657l-.707.707m12.728 0l-.707-.707M6.343 6.343l-.707-.707M12 8a4 4 0 100 8 4 4 0 000-8z"/></svg>
+              </div>
+              <span class="font-serif text-sm font-light tracking-wide text-[#000A1C] whitespace-nowrap">Clima Individual</span>
+            </div>
+          </div>
+
+          <!-- Amenity Set 3 (Duplicate for seamless loop) -->
+          <div class="flex items-center gap-24">
+            <!-- WiFi -->
+            <div class="flex flex-col items-center gap-4 cursor-default">
+              <div class="relative w-16 h-16 rounded-full border border-forest/10 flex items-center justify-center">
+                <svg class="w-8 h-8 text-forest/40" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.2"><path stroke-linecap="round" stroke-linejoin="round" d="M8.111 16.404a5.5 5.5 0 017.778 0M12 20h.01m-7.08-7.071c3.904-3.905 10.236-3.905 14.141 0M1.394 9.393c5.857-5.857 15.355-5.857 21.213 0"/></svg>
+              </div>
+              <span class="font-serif text-sm font-light tracking-wide text-[#000A1C] whitespace-nowrap">WiFi Gratuito</span>
+            </div>
+            <!-- Desayuno -->
+            <div class="flex flex-col items-center gap-4 cursor-default">
+              <div class="relative w-16 h-16 rounded-full border border-gold/40 flex items-center justify-center">
+                <svg class="w-8 h-8 text-gold" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+              </div>
+              <span class="font-serif text-sm font-light tracking-wide text-[#000A1C] whitespace-nowrap">Desayuno Incluido</span>
+            </div>
+            <!-- Restaurante -->
+            <div class="flex flex-col items-center gap-4 cursor-default">
+              <div class="relative w-16 h-16 rounded-full border border-gold/40 flex items-center justify-center">
+                <svg class="w-8 h-8 text-gold" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
+              </div>
+              <span class="font-serif text-sm font-light tracking-wide text-[#000A1C] whitespace-nowrap">Restaurante</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- ═══════════════════════════════════════
+       RESTAURANTE
+  ═══════════════════════════════════════ -->
+  <section id="restaurante" class="py-24 px-4 bg-white relative z-10">
+    <div class="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+
+      <!-- Text -->
+      <div class="fade-up order-2 lg:order-1">
+        <p class="text-gold text-xs tracking-[0.4em] uppercase font-light mb-4">Gastronomía</p>
+        <h2 class="font-serif text-5xl font-semibold text-forest leading-tight mb-6">
+          Una cocina que<br /><em class="font-normal italic text-gold">despierta los sentidos</em>
+        </h2>
+        <div class="gold-line mb-6"></div>
+        <p class="text-forest/70 font-light leading-relaxed mb-4">
+          Nuestro restaurante es el corazón del hotel. Cada mañana te recibimos con un desayuno incluido en tu estancia, elaborado con ingredientes frescos y recetas que combinan lo mejor de la cocina mexicana contemporánea.
+        </p>
+        <p class="text-forest/70 font-light leading-relaxed mb-8">
+          Para el almuerzo y la cena, nuestra carta ofrece una selección curada de platillos que celebran los sabores de la región.
+        </p>
+        <a href="#reservar" class="btn-gold inline-flex items-center gap-3 bg-gold hover:bg-gold-light text-forest font-semibold text-xs tracking-widest uppercase px-8 py-4 transition-colors duration-300 cursor-pointer">
+          Reservar Mesa
+        </a>
+      </div>
+
+      <!-- Image grid -->
+      <div class="grid grid-cols-2 gap-4 order-1 lg:order-2 fade-up">
+        <img src="https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=400&q=80" alt="Platillos del restaurante" class="w-full h-48 object-cover" loading="lazy" />
+        <img src="https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=400&q=80" alt="Desayuno incluido" class="w-full h-48 object-cover mt-8" loading="lazy" />
+        <img src="https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=400&q=80" alt="Cocina del hotel" class="w-full h-48 object-cover -mt-4" loading="lazy" />
+        <img src="https://images.unsplash.com/photo-1482049016688-2d3e1b311543?w=400&q=80" alt="Bebidas y cócteles" class="w-full h-48 object-cover mt-4" loading="lazy" />
+      </div>
+
+    </div>
+  </section>
+
+
+  <!-- ═══════════════════════════════════════
+       CLUB DEPORTIVO
+  ═══════════════════════════════════════ -->
+  <section class="py-24 px-4 bg-ivory">
+    <div class="max-w-7xl mx-auto">
+
+      <div class="text-center mb-16 fade-up">
+        <p class="text-gold text-xs tracking-[0.4em] uppercase font-light mb-3">Bienestar</p>
+        <h2 class="font-serif text-5xl font-semibold text-forest mb-4">Club Deportivo Exclusivo</h2>
+        <div class="flex items-center justify-center gap-4">
+          <span class="gold-line"></span>
+          <p class="text-forest/60 text-sm font-light">Acceso incluido para todos nuestros huéspedes</p>
+          <span class="gold-line"></span>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 fade-up">
+        
+        <!-- Gimnasio -->
+        <div class="group bg-white border border-forest/5 shadow-sm hover:shadow-xl transition-all duration-400 overflow-hidden flex flex-col">
+          <div class="overflow-hidden h-64 sm:h-72">
+            <img src="https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=800&q=80" 
+                 alt="Gimnasio" 
+                 class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" 
+                 loading="lazy" />
+          </div>
+          <div class="p-8">
+            <div class="flex items-center gap-3 mb-3">
+              <span class="w-10 h-px bg-gold"></span>
+              <span class="text-gold text-[10px] tracking-[0.3em] uppercase font-bold">Fitness</span>
+            </div>
+            <h3 class="font-serif text-2xl text-forest font-semibold mb-3">Gimnasio</h3>
+            <p class="text-forest/60 text-sm font-light leading-relaxed">Entrena con equipamiento de primer nivel en un ambiente diseñado para tu máximo rendimiento y bienestar.</p>
+          </div>
+        </div>
+
+        <!-- Tenis -->
+        <div class="group bg-white border border-forest/5 shadow-sm hover:shadow-xl transition-all duration-400 overflow-hidden flex flex-col">
+          <div class="overflow-hidden h-64 sm:h-72">
+            <img src="https://images.unsplash.com/photo-1554068865-24cecd4e34b8?w=800&q=80" 
+                 alt="Canchas de tenis" 
+                 class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" 
+                 loading="lazy" />
+          </div>
+          <div class="p-8">
+            <div class="flex items-center gap-3 mb-3">
+              <span class="w-10 h-px bg-gold"></span>
+              <span class="text-gold text-[10px] tracking-[0.3em] uppercase font-bold">Deporte</span>
+            </div>
+            <h3 class="font-serif text-2xl text-forest font-semibold mb-3">Canchas de Tenis</h3>
+            <p class="text-forest/60 text-sm font-light leading-relaxed">Disfruta de nuestras canchas de tenis profesionales, perfectas tanto para un set relajado como para un partido competitivo.</p>
+          </div>
+        </div>
+
+        <!-- Sauna -->
+        <div class="group bg-white border border-forest/5 shadow-sm hover:shadow-xl transition-all duration-400 overflow-hidden flex flex-col sm:col-span-2 lg:col-span-1">
+          <div class="overflow-hidden h-64 sm:h-72">
+            <img src="https://images.unsplash.com/photo-1554123168-b400f9c806ca?w=800&q=85" 
+                 alt="Sauna y vapor" 
+                 class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" 
+                 loading="lazy" />
+          </div>
+          <div class="p-8">
+            <div class="flex items-center gap-3 mb-3">
+              <span class="w-10 h-px bg-gold"></span>
+              <span class="text-gold text-[10px] tracking-[0.3em] uppercase font-bold">Wellness</span>
+            </div>
+            <h3 class="font-serif text-2xl text-forest font-semibold mb-3">Sauna & Vapor</h3>
+            <p class="text-forest/60 text-sm font-light leading-relaxed">Finaliza tu rutina con una sesión reparadora en nuestro sauna y vapor. El oasis ideal para desconectar y revitalizar cuerpo y mente.</p>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+  </section>
+
+
+  <!-- ═══════════════════════════════════════
+       TOURS TEHUACÁN
+  ═══════════════════════════════════════ -->
+  <section id="tours" class="py-24 px-4 bg-ivory border-y border-forest/5">
+    <div class="max-w-7xl mx-auto">
+
+      <div class="text-center mb-16 fade-up">
+        <p class="text-gold text-xs tracking-[0.4em] uppercase font-light mb-3">Explora la región</p>
+        <h2 class="font-serif text-5xl font-semibold text-forest mb-4">Tours por Tehuacán</h2>
+        <div class="flex items-center justify-center gap-4">
+          <span class="gold-line"></span>
+          <p class="text-forest/50 text-sm font-light">La Perla del Valle te espera</p>
+          <span class="gold-line"></span>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+
+        <!-- Tour 1: Centro Histórico -->
+        <a href="tours.html#centro-historico" class="group bg-white border border-forest/5 hover:border-gold/50 shadow-sm hover:shadow-xl transition-all duration-400 cursor-pointer fade-up overflow-hidden block rounded-xl">
+          <div class="overflow-hidden h-52">
+            <img src="https://images.unsplash.com/photo-1518638150340-f706e86654de?w=600&q=80"
+                 alt="Centro Histórico de Tehuacán"
+                 class="w-full h-full object-cover transition-transform duration-600 group-hover:scale-105" loading="lazy" />
+          </div>
+          <div class="p-6">
+            <div class="flex items-center gap-2 mb-3">
+              <span class="text-gold text-xs tracking-widest uppercase font-bold">Cultura</span>
+              <span class="text-forest/10 text-xs">·</span>
+              <span class="text-forest/40 text-xs text-[10px] uppercase tracking-tighter">Medio día</span>
+            </div>
+            <h3 class="font-serif text-xl font-semibold text-forest mb-3 transition-colors group-hover:text-forest-mid">Centro Histórico</h3>
+            <p class="text-forest/60 text-sm font-light leading-relaxed mb-4">Recorre el zócalo colonial, la Catedral de la Inmaculada Concepción (1728) y el Museo de la Evolución. En el valle donde se domesticó el maíz hace 9,000 años.</p>
+            <div class="flex items-center gap-2 text-gold text-xs font-semibold">
+              <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+              En el centro de la ciudad
+            </div>
+          </div>
+        </a>
+
+        <!-- Tour 2: Zapotitlán Salinas -->
+        <a href="tours.html#zapotitlan" class="group bg-white border border-forest/5 hover:border-gold/50 shadow-sm hover:shadow-xl transition-all duration-400 cursor-pointer fade-up overflow-hidden block rounded-xl">
+          <div class="overflow-hidden h-52">
+            <img src="https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=600&q=80"
+                 alt="Zapotitlán Salinas"
+                 class="w-full h-full object-cover transition-transform duration-600 group-hover:scale-105" loading="lazy" />
+          </div>
+          <div class="p-6">
+            <div class="flex items-center gap-2 mb-3">
+              <span class="text-gold text-xs tracking-widest uppercase font-bold">Naturaleza</span>
+              <span class="text-forest/10 text-xs">·</span>
+              <span class="text-forest/40 text-xs text-[10px] uppercase tracking-tighter">Día completo</span>
+            </div>
+            <h3 class="font-serif text-xl font-semibold text-forest mb-3 transition-colors group-hover:text-forest-mid">Zapotitlán Salinas</h3>
+            <p class="text-forest/60 text-sm font-light leading-relaxed mb-4">Paisaje semidesértico de otro mundo: bosques de cactus columnares gigantes y salinas iridiscentes de técnica prehispánica. Patrimonio Mundial Mixto UNESCO 2018.</p>
+            <div class="flex items-center gap-2 text-gold text-xs font-semibold">
+              <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+              30 km al sur · 40 min
+            </div>
+          </div>
+        </a>
+
+        <!-- Tour 3: Manantial Peñafiel -->
+        <a href="tours.html#penafiel" class="group bg-white border border-forest/5 hover:border-gold/50 shadow-sm hover:shadow-xl transition-all duration-400 cursor-pointer fade-up overflow-hidden block rounded-xl">
+          <div class="overflow-hidden h-52">
+            <img src="https://images.unsplash.com/photo-1433086966358-54859d0ed716?w=600&q=80"
+                 alt="Manantial Peñafiel"
+                 class="w-full h-full object-cover transition-transform duration-600 group-hover:scale-105" loading="lazy" />
+          </div>
+          <div class="p-6">
+            <div class="flex items-center gap-2 mb-3">
+              <span class="text-gold text-xs tracking-widest uppercase font-bold">Bienestar</span>
+              <span class="text-forest/10 text-xs">·</span>
+              <span class="text-forest/40 text-xs text-[10px] uppercase tracking-tighter">2–3 horas</span>
+            </div>
+            <h3 class="font-serif text-xl font-semibold text-forest mb-3 transition-colors group-hover:text-forest-mid">Manantial Peñafiel</h3>
+            <p class="text-forest/60 text-sm font-light leading-relaxed mb-4">El origen del agua más famosa de México. Túneles subterráneos, jardines de cactáceas, albercas de aguas minerales naturales y el mítico "El Chorrito" directo del manantial.</p>
+            <div class="flex items-center gap-2 text-gold text-xs font-semibold">
+              <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+              8 km al norte · 15 min
+            </div>
+          </div>
+        </a>
+
+        <!-- Tour 4: San Juan Raya / Fósiles -->
+        <a href="tours.html#san-juan-raya" class="group bg-white border border-forest/5 hover:border-gold/50 shadow-sm hover:shadow-xl transition-all duration-400 cursor-pointer fade-up overflow-hidden block rounded-xl">
+          <div class="overflow-hidden h-52">
+            <img src="https://images.unsplash.com/photo-1509233725247-49e657c54213?w=600&q=80"
+                 alt="San Juan Raya Fósiles"
+                 class="w-full h-full object-cover transition-transform duration-600 group-hover:scale-105" loading="lazy" />
+          </div>
+          <div class="p-6">
+            <div class="flex items-center gap-2 mb-3">
+              <span class="text-gold text-xs tracking-widest uppercase font-bold">Aventura</span>
+              <span class="text-forest/10 text-xs">·</span>
+              <span class="text-forest/40 text-xs text-[10px] uppercase tracking-tighter">Día completo</span>
+            </div>
+            <h3 class="font-serif text-xl font-semibold text-forest mb-3 transition-colors group-hover:text-forest-mid">San Juan Raya</h3>
+            <p class="text-forest/60 text-sm font-light leading-relaxed mb-4">Toca fósiles marinos del Cretácico en afloramientos al aire libre. Un parque paleontológico único en México donde la historia de millones de años está al alcance de la mano.</p>
+            <div class="flex items-center gap-2 text-gold text-xs font-semibold">
+              <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+              45 km al sur · 1 hr
+            </div>
+          </div>
+        </a>
+
+      </div>
+
+      <!-- CTA -->
+      <div class="text-center mt-12 fade-up">
+        <p class="text-forest/50 text-sm font-light mb-5 italic tracking-wide">Nuestro equipo te ayuda a organizar tu tour. Pregunta en recepción.</p>
+        <a href="tours.html" class="inline-flex items-center gap-2 border border-gold/50 hover:border-gold text-gold hover:text-gold-light text-xs tracking-widest uppercase px-8 py-4 rounded-full transition-all duration-200 cursor-pointer">
+          Ver todos los tours
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
+        </a>
+      </div>
+
+    </div>
+  </section>
+
+
+  <!-- ═══════════════════════════════════════
+       REVIEWS
+  ═══════════════════════════════════════ -->
+  <section class="py-24 px-4 bg-ivory-dark" x-data="{ active: 0 }">
+    <div class="max-w-5xl mx-auto">
+
+      <div class="text-center mb-16 fade-up">
+        <p class="text-gold text-xs tracking-[0.4em] uppercase font-light mb-3">Opiniones</p>
+        <h2 class="font-serif text-5xl font-semibold text-forest mb-4">Lo Que Dicen Nuestros Huéspedes</h2>
+        <!-- Stars -->
+        <div class="flex items-center justify-center gap-2 mb-2">
+          <div class="flex gap-1">
+            <svg class="w-5 h-5 text-gold fill-gold" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+            <svg class="w-5 h-5 text-gold fill-gold" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+            <svg class="w-5 h-5 text-gold fill-gold" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+            <svg class="w-5 h-5 text-gold fill-gold" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+            <svg class="w-5 h-5 text-forest/30 fill-current" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+          </div>
+          <span class="font-serif text-2xl font-semibold text-forest">4.1</span>
+          <span class="text-forest/50 text-sm font-light">en Google Reviews</span>
+        </div>
+      </div>
+
+      <!-- Reviews carousel -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6 fade-up">
+
+        <div class="bg-white p-8 shadow-sm">
+          <div class="flex gap-1 mb-4">
+            <svg class="w-4 h-4 fill-gold" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+            <svg class="w-4 h-4 fill-gold" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+            <svg class="w-4 h-4 fill-gold" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+            <svg class="w-4 h-4 fill-gold" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+            <svg class="w-4 h-4 fill-gold" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+          </div>
+          <p class="text-forest/70 text-sm font-light leading-relaxed italic mb-6">"Excelente ubicación, las instalaciones están muy limpias y el personal es sumamente amable. El desayuno es delicioso. Definitivamente regresaremos."</p>
+          <div class="flex items-center gap-3">
+            <div class="w-8 h-8 rounded-full bg-forest flex items-center justify-center flex-shrink-0">
+              <span class="text-white text-xs font-semibold">MG</span>
+            </div>
+            <div>
+              <p class="text-forest text-sm font-medium">María González</p>
+              <p class="text-forest/40 text-xs">Google Review</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="bg-white p-8 shadow-sm">
+          <div class="flex gap-1 mb-4">
+            <svg class="w-4 h-4 fill-gold" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+            <svg class="w-4 h-4 fill-gold" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+            <svg class="w-4 h-4 fill-gold" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+            <svg class="w-4 h-4 fill-gold" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+            <svg class="w-4 h-4 fill-forest/20" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+          </div>
+          <p class="text-forest/70 text-sm font-light leading-relaxed italic mb-6">"El club deportivo es increíble, no esperaba ese nivel en un hotel de este precio. Las habitaciones son cómodas y muy bien equipadas. Gran relación calidad-precio."</p>
+          <div class="flex items-center gap-3">
+            <div class="w-8 h-8 rounded-full bg-forest flex items-center justify-center flex-shrink-0">
+              <span class="text-white text-xs font-semibold">CR</span>
+            </div>
+            <div>
+              <p class="text-forest text-sm font-medium">Carlos Ramírez</p>
+              <p class="text-forest/40 text-xs">Google Review</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="bg-white p-8 shadow-sm">
+          <div class="flex gap-1 mb-4">
+            <svg class="w-4 h-4 fill-gold" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+            <svg class="w-4 h-4 fill-gold" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+            <svg class="w-4 h-4 fill-gold" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+            <svg class="w-4 h-4 fill-gold" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+            <svg class="w-4 h-4 fill-forest/20" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+          </div>
+          <p class="text-forest/70 text-sm font-light leading-relaxed italic mb-6">"Nos hospedamos en la Suite y fue una experiencia de lujo. El personal anticipó cada necesidad y el servicio de habitaciones fue impecable. Muy recomendado."</p>
+          <div class="flex items-center gap-3">
+            <div class="w-8 h-8 rounded-full bg-forest flex items-center justify-center flex-shrink-0">
+              <span class="text-white text-xs font-semibold">AL</span>
+            </div>
+            <div>
+              <p class="text-forest text-sm font-medium">Ana López</p>
+              <p class="text-forest/40 text-xs">Google Review</p>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+
+  <!-- ═══════════════════════════════════════
+       CONTACT / FOOTER CTA
+  ═══════════════════════════════════════ -->
+  <section id="contacto" class="py-24 px-4 bg-forest">
+    <div class="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-16">
+
+      <!-- Info -->
+      <div class="fade-up">
+        <p class="text-gold text-xs tracking-[0.4em] uppercase font-light mb-4">Contacto</p>
+        <h2 class="font-serif text-4xl font-semibold text-white mb-8">¿Listo para tu escapada perfecta?</h2>
+
+        <div class="space-y-6">
+          <div class="flex items-start gap-4">
+            <div class="w-10 h-10 rounded-full border border-gold/30 flex items-center justify-center flex-shrink-0 mt-1">
+              <svg class="w-4 h-4 text-gold" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+            </div>
+            <div>
+              <p class="text-white font-medium text-sm">Dirección</p>
+              <p class="text-white/60 text-sm font-light mt-1">Hotel Cantarranas, México</p>
+            </div>
+          </div>
+
+          <div class="flex items-start gap-4">
+            <div class="w-10 h-10 rounded-full border border-gold/30 flex items-center justify-center flex-shrink-0">
+              <svg class="w-4 h-4 text-gold" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/></svg>
+            </div>
+            <div>
+              <p class="text-white font-medium text-sm">Teléfono</p>
+              <a href="tel:+521234567890" class="text-gold text-sm font-light hover:text-gold-light transition-colors cursor-pointer">+52 (123) 456 7890</a>
+            </div>
+          </div>
+
+          <div class="flex items-start gap-4">
+            <div class="w-10 h-10 rounded-full border border-gold/30 flex items-center justify-center flex-shrink-0">
+              <svg class="w-4 h-4 text-gold" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+            </div>
+            <div>
+              <p class="text-white font-medium text-sm">Email</p>
+              <a href="mailto:reservas@hotelcantarranas.com" class="text-gold text-sm font-light hover:text-gold-light transition-colors cursor-pointer">reservas@hotelcantarranas.com</a>
+            </div>
+          </div>
+
+          <!-- WhatsApp -->
+          <a
+            href="https://wa.me/521234567890?text=Hola, me gustaría hacer una reservación en Hotel Cantarranas"
+            target="_blank" rel="noopener"
+            class="inline-flex items-center gap-3 border border-gold/40 hover:border-gold text-white hover:text-gold px-6 py-3 text-xs tracking-widest uppercase font-medium transition-all duration-200 cursor-pointer mt-2"
+          >
+            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+            Reservar por WhatsApp
+          </a>
+        </div>
+      </div>
+
+      <!-- Form -->
+      <div class="bg-white p-8 shadow-lg fade-up">
+        <h3 class="font-serif text-2xl font-semibold text-forest mb-6">Envíanos un Mensaje</h3>
+        <form class="space-y-5" onsubmit="return false;">
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label for="nombre" class="block text-xs tracking-widest uppercase text-forest/50 font-medium mb-2">Nombre</label>
+              <input id="nombre" type="text" placeholder="Tu nombre" class="w-full border border-forest/20 px-4 py-3 text-forest text-sm focus:outline-none focus:border-gold transition-colors" />
+            </div>
+            <div>
+              <label for="email" class="block text-xs tracking-widest uppercase text-forest/50 font-medium mb-2">Email</label>
+              <input id="email" type="email" placeholder="tu@email.com" class="w-full border border-forest/20 px-4 py-3 text-forest text-sm focus:outline-none focus:border-gold transition-colors" />
+            </div>
+          </div>
+          <div>
+            <label for="asunto" class="block text-xs tracking-widest uppercase text-forest/50 font-medium mb-2">Asunto</label>
+            <input id="asunto" type="text" placeholder="¿En qué podemos ayudarte?" class="w-full border border-forest/20 px-4 py-3 text-forest text-sm focus:outline-none focus:border-gold transition-colors" />
+          </div>
+          <div>
+            <label for="mensaje" class="block text-xs tracking-widest uppercase text-forest/50 font-medium mb-2">Mensaje</label>
+            <textarea id="mensaje" rows="4" placeholder="Cuéntanos sobre tu estancia ideal..." class="w-full border border-forest/20 px-4 py-3 text-forest text-sm focus:outline-none focus:border-gold transition-colors resize-none"></textarea>
+          </div>
+          <button type="submit" class="btn-gold w-full bg-forest hover:bg-forest/90 text-white font-semibold text-xs tracking-widest uppercase px-6 py-4 transition-colors duration-300 cursor-pointer">
+            Enviar Mensaje
+          </button>
+        </form>
+      </div>
+
+    </div>
+  </section>
+
+
+  <!-- ═══════════════════════════════════════
+       FOOTER (Confispat style)
+  ═══════════════════════════════════════ -->
+  <footer class="bg-[#000A1C] pt-20 pb-10 px-4 mt-0 text-white border-t border-white/5 relative z-30">
+    <div class="max-w-7xl mx-auto">
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 mb-16">
+        
+        <!-- Col 1: Brand -->
+        <div class="space-y-6">
+          <img src="Imágenes/Logo Cantarranas - Bco.png" alt="Casa Cantarranas" class="h-16 w-auto object-contain" />
+          <p class="text-white/50 text-sm font-light leading-relaxed max-w-xs">
+            Casa Cantarranas es un refugio de paz y elegancia en el corazón de Tehuacán. Nuestra misión es brindar una experiencia hospitalaria excepcional rodeada de historia y confort.
+          </p>
+          <div class="flex gap-4">
+            <a href="#" class="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center hover:bg-gold hover:text-[#000A1C] transition-all duration-300">
+              <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
+            </a>
+            <a href="#" class="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center hover:bg-gold hover:text-[#000A1C] transition-all duration-300">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></svg>
+            </a>
+            <a href="#" class="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center hover:bg-gold hover:text-[#000A1C] transition-all duration-300">
+              <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+            </a>
+          </div>
+        </div>
+
+        <!-- Col 2: Navigation -->
+        <div>
+          <h4 class="text-xs tracking-[0.3em] uppercase font-bold text-gold mb-8">Navegación</h4>
+          <ul class="space-y-4">
+            <li><a href="#inicio"  class="text-white/60 hover:text-gold text-sm font-light transition-colors">Inicio</a></li>
+            <li><a href="#servicios" class="text-white/60 hover:text-gold text-sm font-light transition-colors">Servicios</a></li>
+            <li><a href="#habitaciones" class="text-white/60 hover:text-gold text-sm font-light transition-colors">Habitaciones</a></li>
+            <li><a href="#restaurante" class="text-white/60 hover:text-gold text-sm font-light transition-colors">Restaurante</a></li>
+            <li><a href="#contacto" class="text-white/60 hover:text-gold text-sm font-light transition-colors">Contacto</a></li>
+          </ul>
+        </div>
+
+        <!-- Col 3: Contact -->
+        <div>
+          <h4 class="text-xs tracking-[0.3em] uppercase font-bold text-gold mb-8">Contacto</h4>
+          <ul class="space-y-5">
+            <li class="flex items-start gap-3">
+              <svg class="w-5 h-5 text-gold flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/></svg>
+              <a href="tel:2382038132" class="text-white/60 hover:text-white text-sm font-light transition-colors">238-203-8132</a>
+            </li>
+            <li class="flex items-start gap-3">
+              <svg class="w-5 h-5 text-gold flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+              <a href="#" class="text-white/60 hover:text-white text-sm font-light transition-colors">WhatsApp</a>
+            </li>
+            <li class="flex items-start gap-3">
+              <svg class="w-5 h-5 text-gold flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+              <a href="mailto:reservas@hotelcantarranas.com" class="text-white/60 hover:text-white text-sm font-light transition-colors truncate">reservas@hotelcantarranas.com</a>
+            </li>
+          </ul>
+        </div>
+
+        <!-- Col 4: Map -->
+        <div>
+          <h4 class="text-xs tracking-[0.3em] uppercase font-bold text-gold mb-8">Ubicación</h4>
+          <div class="rounded-xl overflow-hidden h-40 border border-white/10 shadow-2xl relative group">
+            <iframe 
+              src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d15124.62!2d-97.39!3d18.46!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x85c5bcd462c90c79%3A0x6b4c3e80a0680a6d!2sTehuac%C3%A1n%2C%20Pue.!5e0!3m2!1ses!2smx!4v1711411200000!5m2!1ses!2smx" 
+              class="w-full h-full border-0 grayscale hover:grayscale-0 transition-all duration-700" 
+              allowfullscreen="" loading="lazy"></iframe>
+            <div class="absolute inset-0 bg-transparent group-hover:bg-transparent pointer-events-none transition-bg duration-300"></div>
+          </div>
+          <p class="text-white/40 text-[11px] font-light mt-4 flex items-center gap-2">
+            <svg class="w-3 h-3 text-gold" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+            4 Norte 609, Tehuacán, Puebla. México
+          </p>
+        </div>
+      </div>
+
+      <!-- Footer Bottom -->
+      <div class="flex flex-col md:flex-row items-center justify-between gap-6 pt-10 border-t border-white/5">
+        <div class="flex flex-col md:flex-row items-center gap-4 md:gap-8">
+            <p class="text-white/30 text-[11px] font-light tracking-wide italic">© 2026 Casa Cantarranas · Tehuacán, Puebla</p>
+            <a href="#" class="text-white/30 hover:text-gold text-[10px] tracking-widest uppercase font-medium transition-colors cursor-pointer">Aviso de Privacidad</a>
+        </div>
+        <div class="flex items-center gap-6">
+            <a href="admin.html" class="text-white/30 hover:text-gold transition-all group flex items-center gap-2" title="Panel de administración">
+                <span class="text-[9px] uppercase tracking-widest opacity-40 group-hover:opacity-100 transition-opacity">Staff Only</span>
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+            </a>
+            <a href="https://hdimpulsodigital.com/" target="_blank" rel="noopener" class="text-white/20 hover:text-white text-[10px] font-light transition-colors">Hecho por HD Impulso Digital</a>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+
+
+  <!-- ═══════════════════════════════════════
+       SCROLL ANIMATION SCRIPT
+  ═══════════════════════════════════════ -->
+  <script>
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('visible');
+        }
+      });
+    }, { threshold: 0.15 });
+
+    document.querySelectorAll('.fade-up').forEach(el => observer.observe(el));
+  </script>
+
+
+  <!-- ── EFECTO 1: GLOW CURSOR en room-cards ──────────────────── -->
+  <script>
+    document.querySelectorAll('.glow-card').forEach(card => {
+      const spot = card.querySelector('.glow-spot');
+      if (!spot) return;
+      card.addEventListener('mousemove', e => {
+        const r = card.getBoundingClientRect();
+        spot.style.left = (e.clientX - r.left) + 'px';
+        spot.style.top  = (e.clientY - r.top)  + 'px';
+      });
+    });
+  </script>
+
+  <!-- ── EFECTO 2: STAT COUNTERS animados al entrar en vista ───── -->
+  <script>
+    function animateCounter(el, target, duration) {
+      let start = null;
+      const step = ts => {
+        if (!start) start = ts;
+        const progress = Math.min((ts - start) / duration, 1);
+        // ease out cubic
+        const ease = 1 - Math.pow(1 - progress, 3);
+        el.textContent = Math.floor(ease * target);
+        if (progress < 1) requestAnimationFrame(step);
+        else el.textContent = target;
+      };
+      requestAnimationFrame(step);
+    }
+
+    const statObserver = new IntersectionObserver(entries => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          const item = entry.target;
+          const target = parseInt(item.dataset.target);
+          const numEl = item.querySelector('.stat-number');
+          if (numEl && numEl.textContent === '0') {
+            animateCounter(numEl, target, 1800);
+          }
+          statObserver.unobserve(item);
+        }
+      });
+    }, { threshold: 0.4 });
+
+    document.querySelectorAll('.stat-item').forEach(el => statObserver.observe(el));
+  </script>
+
+  <!-- ── EFECTO 3: WORD REVEAL al hacer scroll ─────────────────── -->
+  <script>
+    const quote = "Un lugar donde el tiempo se detiene y el confort se convierte en recuerdo.";
+    const revealEl = document.getElementById('reveal-text');
+    if (revealEl) {
+      revealEl.innerHTML = quote.split(' ').map(w =>
+        `<span class="reveal-word">${w}</span>`
+      ).join(' ');
+
+      const words = revealEl.querySelectorAll('.reveal-word');
+      const revealObserver = new IntersectionObserver(entries => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            words.forEach((w, i) => setTimeout(() => w.classList.add('lit'), i * 90));
+            revealObserver.unobserve(entry.target);
+          }
+        });
+      }, { threshold: 0.5 });
+      revealObserver.observe(revealEl);
+    }
+  </script>
+
+  <!-- ── EFECTO 4: MAGNETIC BUTTON en el CTA principal ─────────── -->
+  <script>
+    document.querySelectorAll('.magnetic').forEach(btn => {
+      btn.addEventListener('mousemove', e => {
+        const r = btn.getBoundingClientRect();
+        const x = e.clientX - r.left - r.width  / 2;
+        const y = e.clientY - r.top  - r.height / 2;
+        btn.style.transform = `translate(${x * 0.28}px, ${y * 0.28}px)`;
+      });
+      btn.addEventListener('mouseleave', () => {
+        btn.style.transform = '';
+      });
+    });
+  </script>
+
+  <script>
+    const MONTHS_ES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+
+    function bookingWidget() {
+      const now = new Date();
+      return {
+        openCal: '',
+        guests: 2,
+        checkinYear: now.getFullYear(), checkinMonth: now.getMonth()+1, checkinDay: null, checkinDisplay: '',
+        checkoutYear: now.getFullYear(), checkoutMonth: now.getMonth()+1, checkoutDay: null, checkoutDisplay: '',
+        pad: n => String(n).padStart(2,'0'),
+        toggleCal(which) { this.openCal = this.openCal===which ? '' : which; },
+      }
+    }
+
+    function calendar(initYear, initMonth, initDay, onSelect) {
+      return {
+        year: initYear,
+        month: initMonth,
+        selected: initDay,
+        onSelect,
+        monthName() { return MONTHS_ES[this.month-1]; },
+        daysInMonth() { return new Date(this.year, this.month, 0).getDate(); },
+        firstDay() {
+          const d = new Date(this.year, this.month-1, 1).getDay();
+          return d === 0 ? 6 : d - 1; // lunes=0
+        },
+        isPast(day) {
+          const today = new Date(); today.setHours(0,0,0,0);
+          return new Date(this.year, this.month-1, day) < today;
+        },
+        prevMonth() {
+          if (this.month===1) { this.month=12; this.year--; } else this.month--;
+        },
+        nextMonth() {
+          if (this.month===12) { this.month=1; this.year++; } else this.month++;
+        },
+        select(day) {
+          if (this.isPast(day)) return;
+          this.selected = day;
+          this.onSelect(this.year, this.month, day);
+        }
+      }
+    }
+  </script>
+
+  <script>
+    function heroSlider() {
+      return {
+        current: 0,
+        timer: null,
+        slides: [
+          { caption: 'Alberca — el oasis que mereces' },
+          { caption: 'Habitaciones diseñadas para el descanso total' },
+          { caption: 'Confort y elegancia en cada detalle' },
+          { caption: 'Club Deportivo exclusivo para huéspedes' },
+        ],
+        init() {
+          this.startAuto();
+        },
+        startAuto() {
+          this.timer = setInterval(() => this.next(), 5000);
+        },
+        stopAuto() {
+          clearInterval(this.timer);
+        },
+        next() {
+          this.current = (this.current + 1) % this.slides.length;
+        },
+        prev() {
+          this.stopAuto();
+          this.current = (this.current - 1 + this.slides.length) % this.slides.length;
+          this.startAuto();
+        },
+        goTo(i) {
+          this.stopAuto();
+          this.current = i;
+          this.startAuto();
+        }
+      }
+    }
+  </script>
+
+  <!-- ═══════════════════════════════════════════════════════
+       BOOKING WIZARD — Alpine.js Functions
+  ═══════════════════════════════════════════════════════════ -->
+  <script>
+    const API = 'http://localhost:3001/api';
+
+    // miniCal — expone las funciones con los nombres exactos usados en el HTML:
+    // pm(), nm(), mName(), yr, fd(), dim(), isPast(), iso(), pick()
+    function miniCal() {
+      return {
+        yr: new Date().getFullYear(),
+        mo: new Date().getMonth(),
+        today: new Date().toISOString().slice(0, 10),
+
+        initFrom(val) {
+          const d = val ? new Date(val + 'T12:00:00') : new Date();
+          this.yr = d.getFullYear();
+          this.mo = d.getMonth();
+        },
+
+        pm() {
+          if (this.mo === 0) { this.mo = 11; this.yr--; }
+          else this.mo--;
+        },
+
+        nm() {
+          if (this.mo === 11) { this.mo = 0; this.yr++; }
+          else this.mo++;
+        },
+
+        mName() {
+          return new Date(this.yr, this.mo).toLocaleDateString('es-MX', { month: 'long' });
+        },
+
+        // blanks at start of month
+        fd() {
+          const n = new Date(this.yr, this.mo, 1).getDay();
+          return Array(n).fill(0);
+        },
+
+        // days in month
+        dim() {
+          const n = new Date(this.yr, this.mo + 1, 0).getDate();
+          return Array.from({ length: n }, (_, i) => i + 1);
+        },
+
+        iso(day) {
+          return `${this.yr}-${String(this.mo + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+        },
+
+        isPast(day) {
+          return this.iso(day) < this.today;
+        },
+
+        pick(day, setter) {
+          if (this.isPast(day)) return;
+          setter(this.iso(day));
+        }
+      };
+    }
+
+    // wizard — expone los nombres exactos usados en el HTML:
+    // guests, openCal, toggleCal(), disponibles, habitacion,
+    // form.{nombre,telefono,email,notas}, reservaId,
+    // fmtDate(), nights(), buscarDisponibilidad(), confirmarReserva(), resetWizard()
+    function wizard() {
+      return {
+        step: 1,
+        checkin: '',
+        checkout: '',
+        guests: 1,
+        openCal: '',
+        loading: false,
+        error: '',
+
+        disponibles: [],
+        habitacion: null,
+
+        form: { nombre: '', telefono: '', email: '', notas: '' },
+
+        reservaId: null,
+
+        toggleCal(which) {
+          this.openCal = this.openCal === which ? '' : which;
+        },
+
+        nights() {
+          if (!this.checkin || !this.checkout) return 0;
+          return Math.round((new Date(this.checkout) - new Date(this.checkin)) / 86400000);
+        },
+
+        fmtDate(val) {
+          if (!val) return '—';
+          const [y, m, d] = val.split('-');
+          const ms = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+          return `${parseInt(d)} ${ms[parseInt(m) - 1]} ${y}`;
+        },
+
+        async buscarDisponibilidad() {
+          if (!this.checkin || !this.checkout) return;
+          if (this.nights() < 1) { this.error = 'El checkout debe ser posterior al checkin.'; return; }
+          this.error = '';
+          this.loading = true;
+          try {
+            const url = `${API}/disponibilidad?checkin=${this.checkin}&checkout=${this.checkout}&huespedes=${this.guests}`;
+            const res = await fetch(url);
+            if (!res.ok) throw new Error('Error al consultar disponibilidad');
+            this.disponibles = await res.json();
+            this.habitacion = null;
+            this.step = 2;
+          } catch (e) {
+            this.error = e.message || 'Error de conexión. ¿Está corriendo el servidor?';
+          } finally {
+            this.loading = false;
+          }
+        },
+
+        async confirmarReserva() {
+          if (!this.form.nombre.trim() || !this.form.telefono.trim()) {
+            this.error = 'Nombre y teléfono son requeridos.';
+            return;
+          }
+          this.error = '';
+          this.loading = true;
+          try {
+            const res = await fetch(`${API}/reservas`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                habitacion_id: this.habitacion.id,
+                checkin: this.checkin,
+                checkout: this.checkout,
+                huespedes: this.guests,
+                nombre: this.form.nombre,
+                telefono: this.form.telefono,
+                email: this.form.email,
+                notas: this.form.notas
+              })
+            });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error || 'Error al crear reserva');
+            this.reservaId = data.id;
+            this.step = 4;
+          } catch (e) {
+            this.error = e.message || 'Error de conexión.';
+          } finally {
+            this.loading = false;
+          }
+        },
+
+        resetWizard() {
+          this.step = 1;
+          this.checkin = ''; this.checkout = '';
+          this.guests = 1; this.openCal = '';
+          this.disponibles = []; this.habitacion = null;
+          this.form = { nombre: '', telefono: '', email: '', notas: '' };
+          this.error = ''; this.reservaId = null;
+        }
+      };
+    }
+  </script>
+
+  <!-- WhatsApp widget -->
+  <div x-data="{
+    open: false,
+    msg: '',
+    phone: '5212221234567',
+    sent: false,
+    send() {
+      const text = encodeURIComponent(this.msg || '¡Hola! Me gustaría obtener más información sobre sus habitaciones.');
+      window.open('https://wa.me/' + this.phone + '?text=' + text, '_blank');
+      this.sent = true;
+      setTimeout(() => { this.sent = false; this.msg = ''; }, 3000);
+    }
+  }" class="fixed bottom-6 right-6 z-50">
+
+    <!-- Popup chat -->
+    <div x-show="open"
+         x-transition:enter="transition duration-200 ease-out"
+         x-transition:enter-start="opacity-0 translate-y-4 scale-95"
+         x-transition:enter-end="opacity-100 translate-y-0 scale-100"
+         x-transition:leave="transition duration-150 ease-in"
+         x-transition:leave-start="opacity-100 translate-y-0 scale-100"
+         x-transition:leave-end="opacity-0 translate-y-4 scale-95"
+         class="absolute bottom-16 right-0 w-80 bg-white rounded-2xl shadow-2xl overflow-hidden origin-bottom-right"
+         style="box-shadow:0 8px 40px rgba(0,0,0,0.18)">
+
+      <!-- Header -->
+      <div class="flex items-center gap-3 px-4 py-3.5" style="background:#25d366">
+        <!-- WA icon -->
+        <div class="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center flex-shrink-0">
+          <svg viewBox="0 0 32 32" class="w-6 h-6 fill-white"><path d="M16 2C8.268 2 2 8.268 2 16c0 2.494.655 4.835 1.8 6.858L2 30l7.343-1.775A13.94 13.94 0 0016 30c7.732 0 14-6.268 14-14S23.732 2 16 2zm0 25.5a11.44 11.44 0 01-5.834-1.6l-.418-.248-4.358 1.054 1.083-4.24-.272-.434A11.46 11.46 0 014.5 16C4.5 9.648 9.648 4.5 16 4.5S27.5 9.648 27.5 16 22.352 27.5 16 27.5zm6.29-8.617c-.345-.172-2.04-1.006-2.356-1.12-.316-.115-.546-.172-.776.172-.23.345-.89 1.12-1.09 1.35-.2.23-.4.258-.745.086-.345-.172-1.457-.537-2.776-1.714-1.026-.916-1.718-2.047-1.92-2.392-.2-.345-.021-.532.151-.703.155-.155.345-.403.517-.604.172-.2.23-.345.345-.575.115-.23.057-.431-.029-.604-.086-.172-.776-1.87-1.063-2.56-.28-.672-.564-.581-.776-.592l-.66-.011c-.23 0-.604.086-.92.431s-1.207 1.178-1.207 2.873 1.235 3.333 1.407 3.563c.172.23 2.43 3.71 5.888 5.203.823.355 1.465.567 1.966.726.826.263 1.578.226 2.172.137.663-.099 2.04-.834 2.328-1.638.287-.804.287-1.493.2-1.638-.086-.144-.316-.23-.66-.402z"/></svg>
+        </div>
+        <div class="flex-1 min-w-0">
+          <div class="text-white font-semibold text-sm leading-tight">Hotel Cantarranas</div>
+          <div class="text-white/80 text-xs flex items-center gap-1.5 mt-0.5">
+            <span class="w-2 h-2 rounded-full bg-white/90 inline-block"></span>
+            Recepción · 24/7
+          </div>
+        </div>
+        <button @click="open=false" class="text-white/70 hover:text-white transition-colors cursor-pointer p-1">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+
+      <!-- Burbuja de bienvenida -->
+      <div class="px-4 pt-4 pb-2" style="background:#f0f0f0">
+        <div class="bg-white rounded-2xl rounded-tl-sm px-4 py-3 shadow-sm max-w-xs text-sm text-gray-700 leading-relaxed">
+          ¡Hola! 👋 Bienvenido a <strong>Hotel Cantarranas</strong>.<br>
+          ¿En qué podemos ayudarte hoy?
+          <div class="text-gray-400 text-xs mt-1 text-right">Recepción</div>
+        </div>
+      </div>
+
+      <!-- Input mensaje -->
+      <div class="px-4 pb-4 pt-2" style="background:#f0f0f0">
+        <div class="bg-white rounded-xl flex items-end gap-2 px-3 py-2 shadow-sm">
+          <textarea x-model="msg"
+                    @keydown.enter.prevent="!$event.shiftKey && send()"
+                    placeholder="Escribe tu mensaje..."
+                    rows="2"
+                    class="flex-1 resize-none text-sm text-gray-700 placeholder-gray-400 focus:outline-none leading-relaxed bg-transparent"></textarea>
+          <button @click="send()"
+                  :disabled="sent"
+                  class="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 cursor-pointer transition-all"
+                  :style="sent ? 'background:#128c7e' : 'background:#25d366'"
+                  title="Enviar por WhatsApp">
+            <!-- Send icon -->
+            <svg x-show="!sent" class="w-4 h-4 fill-white" viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+            <!-- Check icon -->
+            <svg x-show="sent" class="w-4 h-4 fill-white" viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/></svg>
+          </button>
+        </div>
+        <p class="text-center text-gray-400 text-xs mt-2">
+          <span x-show="!sent">Abre WhatsApp con tu mensaje listo</span>
+          <span x-show="sent" class="text-green-600 font-medium">¡WhatsApp abierto!</span>
+        </p>
+      </div>
+    </div>
+
+    <!-- Botón flotante -->
+    <button @click="open=!open"
+            class="relative w-14 h-14 rounded-full shadow-xl flex items-center justify-center cursor-pointer transition-transform hover:scale-110 active:scale-95"
+            style="background:#25d366"
+            aria-label="Contactar por WhatsApp">
+      <!-- WA icon (visible cuando cerrado) -->
+      <svg x-show="!open" class="w-7 h-7 fill-white" viewBox="0 0 32 32"><path d="M16 2C8.268 2 2 8.268 2 16c0 2.494.655 4.835 1.8 6.858L2 30l7.343-1.775A13.94 13.94 0 0016 30c7.732 0 14-6.268 14-14S23.732 2 16 2zm0 25.5a11.44 11.44 0 01-5.834-1.6l-.418-.248-4.358 1.054 1.083-4.24-.272-.434A11.46 11.46 0 014.5 16C4.5 9.648 9.648 4.5 16 4.5S27.5 9.648 27.5 16 22.352 27.5 16 27.5zm6.29-8.617c-.345-.172-2.04-1.006-2.356-1.12-.316-.115-.546-.172-.776.172-.23.345-.89 1.12-1.09 1.35-.2.23-.4.258-.745.086-.345-.172-1.457-.537-2.776-1.714-1.026-.916-1.718-2.047-1.92-2.392-.2-.345-.021-.532.151-.703.155-.155.345-.403.517-.604.172-.2.23-.345.345-.575.115-.23.057-.431-.029-.604-.086-.172-.776-1.87-1.063-2.56-.28-.672-.564-.581-.776-.592l-.66-.011c-.23 0-.604.086-.92.431s-1.207 1.178-1.207 2.873 1.235 3.333 1.407 3.563c.172.23 2.43 3.71 5.888 5.203.823.355 1.465.567 1.966.726.826.263 1.578.226 2.172.137.663-.099 2.04-.834 2.328-1.638.287-.804.287-1.493.2-1.638-.086-.144-.316-.23-.66-.402z"/></svg>
+      <!-- X icon (visible cuando abierto) -->
+      <svg x-show="open" class="w-6 h-6" fill="none" stroke="white" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/></svg>
+      <!-- Ping (solo cuando cerrado) -->
+      <span x-show="!open" class="absolute inset-0 rounded-full animate-ping opacity-25" style="background:#25d366"></span>
+    </button>
+
+  </div>
+
+</body>
+</html>

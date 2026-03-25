@@ -1,0 +1,566 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Habitaciones — Hotel Cantarranas</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant:ital,wght@0,400;0,500;0,600;0,700;1,400;1,600&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet" />
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            forest:       '#000A1C',
+            gold:         '#c9a84c',
+            'gold-light': '#e0c078',
+            ivory:        '#f9f5ef',
+            'ivory-dark': '#ede8df',
+          },
+          fontFamily: {
+            serif: ['Cormorant', 'Georgia', 'serif'],
+            sans:  ['Inter', 'system-ui', 'sans-serif'],
+          },
+        }
+      }
+    }
+  </script>
+  <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+
+  <style>
+    html { scroll-behavior: smooth; }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+    }
+
+    .gold-line { width: 60px; height: 1px; background: #c9a84c; display: inline-block; }
+
+    /* Floating Navbar - White Pill Style */
+    .nav-floating {
+      top: 24px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 90%;
+      max-width: 1200px;
+      background: rgba(255, 255, 255, 0.85);
+      backdrop-filter: blur(12px);
+      border-radius: 100px;
+      padding: 0 24px;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.08);
+      border: 1px solid rgba(255,255,255,0.3);
+      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .nav-floating.scrolled {
+      top: 12px;
+      width: 95%;
+      background: rgba(255, 255, 255, 0.95);
+      box-shadow: 0 6px 30px rgba(0,0,0,0.1);
+    }
+
+    /* Lightbox */
+    .lightbox-img { max-height: 80vh; max-width: 90vw; object-fit: contain; }
+
+    /* Room tab active */
+    .room-tab { transition: all 0.25s ease; }
+    .room-tab.active { background: #000A1C; color: #fff; }
+    .room-tab:not(.active) { background: transparent; color: #000A1C; }
+
+    /* Gallery grid hover */
+    .gallery-item { overflow: hidden; cursor: zoom-in; }
+    .gallery-item img { transition: transform 0.5s ease; }
+    .gallery-item:hover img { transform: scale(1.06); }
+
+    .fade-up { opacity: 0; transform: translateY(24px); transition: opacity 0.6s ease, transform 0.6s ease; }
+    .fade-up.visible { opacity: 1; transform: translateY(0); }
+  </style>
+</head>
+
+<body class="bg-ivory font-sans text-forest antialiased"
+  x-data="{
+    activeRoom: 'standard',
+    lightbox: false,
+    lightboxSrc: '',
+    lightboxAlt: '',
+    openLight(src, alt) { this.lightboxSrc = src; this.lightboxAlt = alt; this.lightbox = true; },
+    closeLight() { this.lightbox = false; }
+  }"
+>
+
+  <!-- ══════════════════════════
+       NAV
+  ══════════════════════════ -->
+  <nav
+    x-data="{ open: false, scrolled: false }"
+    x-init="window.addEventListener('scroll', () => { scrolled = window.scrollY > 40 })"
+    :class="scrolled ? 'nav-floating scrolled' : 'nav-floating'"
+    class="fixed z-50 transition-all duration-300"
+  >
+    <div class="px-6 flex items-center justify-between h-14 sm:h-16">
+      <a href="index.html" class="cursor-pointer">
+        <img src="Imágenes/Logo Hotel Cantarranas.png" alt="Hotel Cantarranas" class="h-10 sm:h-11 w-auto object-contain" />
+      </a>
+      <!-- Desktop menu -->
+      <div class="hidden md:flex items-center gap-8">
+        <a href="index.html#servicios"    class="text-forest/70 hover:text-forest text-[13px] tracking-widest uppercase font-semibold transition-colors cursor-pointer">Servicios</a>
+        <a href="habitaciones.html"       class="text-forest text-[13px] tracking-widest uppercase font-bold border-b-2 border-forest/20 pb-0.5 cursor-pointer">Habitaciones</a>
+        <a href="index.html#restaurante"  class="text-forest/70 hover:text-forest text-[13px] tracking-widest uppercase font-semibold transition-colors cursor-pointer">Restaurante</a>
+        <a href="index.html#tours"        class="text-forest/70 hover:text-forest text-[13px] tracking-widest uppercase font-semibold transition-colors cursor-pointer">Tours</a>
+        <a href="index.html#contacto"     class="text-forest/70 hover:text-forest text-[13px] tracking-widest uppercase font-semibold transition-colors cursor-pointer">Contacto</a>
+      </div>
+
+      <!-- CTA -->
+      <a href="index.html#reservar" class="hidden md:inline-flex items-center gap-2 bg-gold hover:bg-gold-light text-forest text-[11px] font-bold tracking-widest uppercase px-6 py-2.5 rounded-xl transition-all duration-300 cursor-pointer shadow-lg shadow-gold/20">
+        Reservar
+      </a>
+
+      <!-- Mobile hamburger -->
+      <button @click="open = !open" class="md:hidden text-forest p-2 cursor-pointer" aria-label="Abrir menú">
+        <svg x-show="!open" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+        <svg x-show="open" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+      </button>
+
+    </div>
+
+    <!-- Mobile menu -->
+    <div x-show="open" x-transition class="md:hidden bg-[#000A1C]/95 rounded-3xl mt-2 mx-4 p-6 space-y-4 shadow-2xl border border-white/10 uppercase font-medium text-sm tracking-widest">
+      <a href="index.html#servicios"    @click="open=false" class="block text-white/80 hover:text-gold transition-colors">Servicios</a>
+      <a href="habitaciones.html"       @click="open=false" class="block text-white/80 hover:text-gold transition-colors">Habitaciones</a>
+      <a href="index.html#restaurante"  @click="open=false" class="block text-white/80 hover:text-gold transition-colors">Restaurante</a>
+      <a href="index.html#tours"        @click="open=false" class="block text-white/80 hover:text-gold transition-colors">Tours</a>
+      <a href="index.html#contacto"     @click="open=false" class="block text-white/80 hover:text-gold transition-colors">Contacto</a>
+      <a href="index.html#reservar"     @click="open=false" class="inline-block w-full text-center bg-gold text-[#000A1C] p-4 rounded-xl font-bold">Reservar Ahora</a>
+    </div>
+    </div>
+  </nav>
+
+
+  <!-- ══════════════════════════
+       PAGE HERO
+  ══════════════════════════ -->
+  <section class="relative h-72 sm:h-96 flex items-end justify-center overflow-hidden">
+    <img src="https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=1920&q=85"
+         alt="Habitaciones Hotel Cantarranas"
+         class="absolute inset-0 w-full h-full object-cover object-center scale-105" loading="eager" />
+    <div class="absolute inset-0 bg-black/50"></div>
+    <div class="relative z-10 text-center pb-14 px-4">
+      <p class="text-gold text-xs tracking-[0.4em] uppercase font-light mb-2">Alojamiento</p>
+      <h1 class="font-serif text-5xl sm:text-6xl font-semibold text-white">Nuestras Habitaciones</h1>
+    </div>
+  </section>
+
+
+  <!-- ══════════════════════════
+       ROOM TABS
+  ══════════════════════════ -->
+  <section class="bg-ivory-dark sticky top-20 z-40 border-b border-forest/10">
+    <div class="max-w-5xl mx-auto px-4 flex items-center justify-center gap-2 sm:gap-4 py-4 flex-wrap">
+      <button @click="activeRoom='standard'" :class="activeRoom==='standard' ? 'active' : ''"
+        class="room-tab border border-forest/20 text-xs font-semibold tracking-widest uppercase px-5 py-2.5 rounded-full cursor-pointer">
+        Standard
+      </button>
+      <button @click="activeRoom='deluxe'" :class="activeRoom==='deluxe' ? 'active' : ''"
+        class="room-tab border border-forest/20 text-xs font-semibold tracking-widest uppercase px-5 py-2.5 rounded-full cursor-pointer">
+        Deluxe
+      </button>
+      <button @click="activeRoom='suite'" :class="activeRoom==='suite' ? 'active' : ''"
+        class="room-tab border border-forest/20 text-xs font-semibold tracking-widest uppercase px-5 py-2.5 rounded-full cursor-pointer">
+        Suite Cantarranas
+      </button>
+      <button @click="activeRoom='triple'" :class="activeRoom==='triple' ? 'active' : ''"
+        class="room-tab border border-forest/20 text-xs font-semibold tracking-widest uppercase px-5 py-2.5 rounded-full cursor-pointer">
+        Triple
+      </button>
+    </div>
+  </section>
+
+
+  <!-- ══════════════════════════
+       HABITACIÓN STANDARD
+  ══════════════════════════ -->
+  <section x-show="activeRoom==='standard'" x-transition:enter="transition ease-out duration-300"
+    x-transition:enter-start="opacity-0 translate-y-4" x-transition:enter-end="opacity-100 translate-y-0"
+    class="py-20 px-4">
+    <div class="max-w-7xl mx-auto">
+
+      <!-- Info -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center mb-16 fade-up">
+        <div>
+          <p class="text-gold text-xs tracking-[0.4em] uppercase font-light mb-3">Estándar</p>
+          <h2 class="font-serif text-5xl font-semibold text-forest mb-4">Habitación Standard</h2>
+          <div class="gold-line mb-6"></div>
+          <p class="text-forest/70 font-light leading-relaxed mb-6">
+            Nuestra habitación Standard ofrece todo lo que necesitas para una estancia cómoda y placentera. Diseñada con materiales de calidad y atención al detalle, es el refugio perfecto para viajeros que buscan lo esencial sin sacrificar el estilo.
+          </p>
+          <!-- Amenidades -->
+          <ul class="grid grid-cols-2 gap-3 mb-8">
+            <li class="flex items-center gap-2 text-sm text-forest/70 font-light">
+              <svg class="w-4 h-4 text-gold flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+              Cama matrimonial
+            </li>
+            <li class="flex items-center gap-2 text-sm text-forest/70 font-light">
+              <svg class="w-4 h-4 text-gold flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+              Aire acondicionado
+            </li>
+            <li class="flex items-center gap-2 text-sm text-forest/70 font-light">
+              <svg class="w-4 h-4 text-gold flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+              WiFi gratuito
+            </li>
+            <li class="flex items-center gap-2 text-sm text-forest/70 font-light">
+              <svg class="w-4 h-4 text-gold flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+              TV pantalla plana
+            </li>
+            <li class="flex items-center gap-2 text-sm text-forest/70 font-light">
+              <svg class="w-4 h-4 text-gold flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+              Desayuno incluido
+            </li>
+            <li class="flex items-center gap-2 text-sm text-forest/70 font-light">
+              <svg class="w-4 h-4 text-gold flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+              Baño privado
+            </li>
+          </ul>
+          <a href="index.html#reservar" class="inline-flex items-center gap-2 bg-gold hover:bg-gold-light text-forest font-semibold text-xs tracking-widest uppercase px-8 py-4 rounded-full transition-colors duration-300 cursor-pointer">
+            Reservar esta habitación
+          </a>
+        </div>
+        <!-- Main photo -->
+        <div class="gallery-item rounded-sm shadow-xl" @click="openLight('https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=1400&q=90', 'Habitación Standard')">
+          <img src="https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=900&q=85" alt="Habitación Standard" class="w-full h-80 object-cover" loading="lazy" />
+        </div>
+      </div>
+
+      <!-- Gallery grid -->
+      <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 fade-up">
+        <div class="gallery-item rounded-sm" @click="openLight('https://images.unsplash.com/photo-1566665797739-1674de7a421a?w=1200&q=90','Habitación Standard - Detalle')">
+          <img src="https://images.unsplash.com/photo-1566665797739-1674de7a421a?w=400&q=80" alt="Standard detalle" class="w-full h-40 sm:h-52 object-cover" loading="lazy" />
+        </div>
+        <div class="gallery-item rounded-sm" @click="openLight('https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=1200&q=90','Habitación Standard - Sala')">
+          <img src="https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=400&q=80" alt="Standard sala" class="w-full h-40 sm:h-52 object-cover" loading="lazy" />
+        </div>
+        <div class="gallery-item rounded-sm" @click="openLight('https://images.unsplash.com/photo-1584132967334-10e028bd69f7?w=1200&q=90','Habitación Standard - Baño')">
+          <img src="https://images.unsplash.com/photo-1584132967334-10e028bd69f7?w=400&q=80" alt="Standard baño" class="w-full h-40 sm:h-52 object-cover" loading="lazy" />
+        </div>
+        <div class="gallery-item rounded-sm" @click="openLight('https://images.unsplash.com/photo-1562438668-bcf0ca6578f0?w=1200&q=90','Habitación Standard - Vista')">
+          <img src="https://images.unsplash.com/photo-1562438668-bcf0ca6578f0?w=400&q=80" alt="Standard vista" class="w-full h-40 sm:h-52 object-cover" loading="lazy" />
+        </div>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- ══════════════════════════
+       HABITACIÓN DELUXE
+  ══════════════════════════ -->
+  <section x-show="activeRoom==='deluxe'" x-transition:enter="transition ease-out duration-300"
+    x-transition:enter-start="opacity-0 translate-y-4" x-transition:enter-end="opacity-100 translate-y-0"
+    class="py-20 px-4">
+    <div class="max-w-7xl mx-auto">
+
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center mb-16 fade-up">
+        <div>
+          <p class="text-gold text-xs tracking-[0.4em] uppercase font-light mb-3">Deluxe</p>
+          <h2 class="font-serif text-5xl font-semibold text-forest mb-4">Habitación Deluxe</h2>
+          <div class="gold-line mb-6"></div>
+          <p class="text-forest/70 font-light leading-relaxed mb-6">
+            La Habitación Deluxe eleva tu estancia a otro nivel. Espacios más amplios, decoración refinada con materiales premium y vistas privilegiadas al jardín. Ideal para huéspedes que buscan ese extra de lujo y comodidad.
+          </p>
+          <ul class="grid grid-cols-2 gap-3 mb-8">
+            <li class="flex items-center gap-2 text-sm text-forest/70 font-light"><svg class="w-4 h-4 text-gold flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>Cama King Size</li>
+            <li class="flex items-center gap-2 text-sm text-forest/70 font-light"><svg class="w-4 h-4 text-gold flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>Vista al jardín</li>
+            <li class="flex items-center gap-2 text-sm text-forest/70 font-light"><svg class="w-4 h-4 text-gold flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>Minibar incluido</li>
+            <li class="flex items-center gap-2 text-sm text-forest/70 font-light"><svg class="w-4 h-4 text-gold flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>Bañera y regadera</li>
+            <li class="flex items-center gap-2 text-sm text-forest/70 font-light"><svg class="w-4 h-4 text-gold flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>Desayuno incluido</li>
+            <li class="flex items-center gap-2 text-sm text-forest/70 font-light"><svg class="w-4 h-4 text-gold flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>Acceso club deportivo</li>
+          </ul>
+          <a href="index.html#reservar" class="inline-flex items-center gap-2 bg-gold hover:bg-gold-light text-forest font-semibold text-xs tracking-widest uppercase px-8 py-4 rounded-full transition-colors duration-300 cursor-pointer">
+            Reservar esta habitación
+          </a>
+        </div>
+        <div class="gallery-item rounded-sm shadow-xl" @click="openLight('https://images.unsplash.com/photo-1618773928121-c32242e63f39?w=1400&q=90','Habitación Deluxe')">
+          <img src="https://images.unsplash.com/photo-1618773928121-c32242e63f39?w=900&q=85" alt="Habitación Deluxe" class="w-full h-80 object-cover" loading="lazy" />
+        </div>
+      </div>
+
+      <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 fade-up">
+        <div class="gallery-item rounded-sm" @click="openLight('https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?w=1200&q=90','Deluxe - Detalle')">
+          <img src="https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?w=400&q=80" alt="Deluxe detalle" class="w-full h-40 sm:h-52 object-cover" loading="lazy" />
+        </div>
+        <div class="gallery-item rounded-sm" @click="openLight('https://images.unsplash.com/photo-1560185007-c5ca9d2c014d?w=1200&q=90','Deluxe - Sala')">
+          <img src="https://images.unsplash.com/photo-1560185007-c5ca9d2c014d?w=400&q=80" alt="Deluxe sala" class="w-full h-40 sm:h-52 object-cover" loading="lazy" />
+        </div>
+        <div class="gallery-item rounded-sm" @click="openLight('https://images.unsplash.com/photo-1507652313519-d4e9174996dd?w=1200&q=90','Deluxe - Baño')">
+          <img src="https://images.unsplash.com/photo-1507652313519-d4e9174996dd?w=400&q=80" alt="Deluxe baño" class="w-full h-40 sm:h-52 object-cover" loading="lazy" />
+        </div>
+        <div class="gallery-item rounded-sm" @click="openLight('https://images.unsplash.com/photo-1616594039964-ae9021a400a0?w=1200&q=90','Deluxe - Vista')">
+          <img src="https://images.unsplash.com/photo-1616594039964-ae9021a400a0?w=400&q=80" alt="Deluxe vista" class="w-full h-40 sm:h-52 object-cover" loading="lazy" />
+        </div>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- ══════════════════════════
+       SUITE PARAÍSO
+  ══════════════════════════ -->
+  <section x-show="activeRoom==='suite'" x-transition:enter="transition ease-out duration-300"
+    x-transition:enter-start="opacity-0 translate-y-4" x-transition:enter-end="opacity-100 translate-y-0"
+    class="py-20 px-4">
+    <div class="max-w-7xl mx-auto">
+
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center mb-16 fade-up">
+        <div>
+          <p class="text-gold text-xs tracking-[0.4em] uppercase font-light mb-3">Suite</p>
+          <h2 class="font-serif text-5xl font-semibold text-forest mb-4">Suite Cantarranas</h2>
+          <div class="gold-line mb-6"></div>
+          <p class="text-forest/70 font-light leading-relaxed mb-6">
+            La Suite Cantarranas es nuestra joya insignia. Un espacio de lujo absoluto con sala de estar independiente, decoración exclusiva y todos los detalles pensados para ofrecerte la máxima privacidad y confort. Para ocasiones que merecen lo mejor.
+          </p>
+          <ul class="grid grid-cols-2 gap-3 mb-8">
+            <li class="flex items-center gap-2 text-sm text-forest/70 font-light"><svg class="w-4 h-4 text-gold flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>Suite con sala de estar</li>
+            <li class="flex items-center gap-2 text-sm text-forest/70 font-light"><svg class="w-4 h-4 text-gold flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>Jacuzzi privado</li>
+            <li class="flex items-center gap-2 text-sm text-forest/70 font-light"><svg class="w-4 h-4 text-gold flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>Servicio a la habitación 24h</li>
+            <li class="flex items-center gap-2 text-sm text-forest/70 font-light"><svg class="w-4 h-4 text-gold flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>Amenidades premium</li>
+            <li class="flex items-center gap-2 text-sm text-forest/70 font-light"><svg class="w-4 h-4 text-gold flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>Desayuno y cena incluidos</li>
+            <li class="flex items-center gap-2 text-sm text-forest/70 font-light"><svg class="w-4 h-4 text-gold flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>Butler personal</li>
+          </ul>
+          <a href="index.html#reservar" class="inline-flex items-center gap-2 bg-gold hover:bg-gold-light text-forest font-semibold text-xs tracking-widest uppercase px-8 py-4 rounded-full transition-colors duration-300 cursor-pointer">
+            Reservar esta habitación
+          </a>
+        </div>
+        <div class="gallery-item rounded-sm shadow-xl" @click="openLight('https://images.unsplash.com/photo-1590490360182-c33d57733427?w=1400&q=90','Suite Paraíso')">
+          <img src="https://images.unsplash.com/photo-1590490360182-c33d57733427?w=900&q=85" alt="Suite Paraíso" class="w-full h-80 object-cover" loading="lazy" />
+        </div>
+      </div>
+
+      <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 fade-up">
+        <div class="gallery-item rounded-sm" @click="openLight('https://images.unsplash.com/photo-1578683010236-d716f9a3f461?w=1200&q=90','Suite - Sala de estar')">
+          <img src="https://images.unsplash.com/photo-1578683010236-d716f9a3f461?w=400&q=80" alt="Suite sala" class="w-full h-40 sm:h-52 object-cover" loading="lazy" />
+        </div>
+        <div class="gallery-item rounded-sm" @click="openLight('https://images.unsplash.com/photo-1552858725-2758b5fb1286?w=1200&q=90','Suite - Jacuzzi')">
+          <img src="https://images.unsplash.com/photo-1552858725-2758b5fb1286?w=400&q=80" alt="Suite jacuzzi" class="w-full h-40 sm:h-52 object-cover" loading="lazy" />
+        </div>
+        <div class="gallery-item rounded-sm" @click="openLight('https://images.unsplash.com/photo-1584132915807-fd1f5fbc078f?w=1200&q=90','Suite - Baño de lujo')">
+          <img src="https://images.unsplash.com/photo-1584132915807-fd1f5fbc078f?w=400&q=80" alt="Suite baño" class="w-full h-40 sm:h-52 object-cover" loading="lazy" />
+        </div>
+        <div class="gallery-item rounded-sm" @click="openLight('https://images.unsplash.com/photo-1560347876-aeef00ee58a1?w=1200&q=90','Suite - Terraza')">
+          <img src="https://images.unsplash.com/photo-1560347876-aeef00ee58a1?w=400&q=80" alt="Suite terraza" class="w-full h-40 sm:h-52 object-cover" loading="lazy" />
+        </div>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- ══════════════════════════
+       HABITACIÓN TRIPLE
+  ══════════════════════════ -->
+  <section x-show="activeRoom==='triple'" x-transition:enter="transition ease-out duration-300"
+    x-transition:enter-start="opacity-0 translate-y-4" x-transition:enter-end="opacity-100 translate-y-0"
+    class="py-20 px-4">
+    <div class="max-w-7xl mx-auto">
+
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center mb-16 fade-up">
+        <div>
+          <p class="text-gold text-xs tracking-[0.4em] uppercase font-light mb-3">Familiar</p>
+          <h2 class="font-serif text-5xl font-semibold text-forest mb-4">Habitación Triple</h2>
+          <div class="gold-line mb-6"></div>
+          <p class="text-forest/70 font-light leading-relaxed mb-6">
+            Diseñada para familias y grupos de amigos, la Habitación Triple ofrece espacio, comodidad y funcionalidad sin sacrificar el estilo. Tres huéspedes con todas las comodidades de nuestro estándar de calidad.
+          </p>
+          <ul class="grid grid-cols-2 gap-3 mb-8">
+            <li class="flex items-center gap-2 text-sm text-forest/70 font-light"><svg class="w-4 h-4 text-gold flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>3 camas individuales</li>
+            <li class="flex items-center gap-2 text-sm text-forest/70 font-light"><svg class="w-4 h-4 text-gold flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>Espacio extra amplio</li>
+            <li class="flex items-center gap-2 text-sm text-forest/70 font-light"><svg class="w-4 h-4 text-gold flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>WiFi de alta velocidad</li>
+            <li class="flex items-center gap-2 text-sm text-forest/70 font-light"><svg class="w-4 h-4 text-gold flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>TV 55" pantalla plana</li>
+            <li class="flex items-center gap-2 text-sm text-forest/70 font-light"><svg class="w-4 h-4 text-gold flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>Desayuno incluido</li>
+            <li class="flex items-center gap-2 text-sm text-forest/70 font-light"><svg class="w-4 h-4 text-gold flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>Acceso club deportivo</li>
+          </ul>
+          <a href="index.html#reservar" class="inline-flex items-center gap-2 bg-gold hover:bg-gold-light text-forest font-semibold text-xs tracking-widest uppercase px-8 py-4 rounded-full transition-colors duration-300 cursor-pointer">
+            Reservar esta habitación
+          </a>
+        </div>
+        <div class="gallery-item rounded-sm shadow-xl" @click="openLight('https://images.unsplash.com/photo-1596394516093-501ba68a0ba6?w=1400&q=90','Habitación Triple')">
+          <img src="https://images.unsplash.com/photo-1596394516093-501ba68a0ba6?w=900&q=85" alt="Habitación Triple" class="w-full h-80 object-cover" loading="lazy" />
+        </div>
+      </div>
+
+      <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 fade-up">
+        <div class="gallery-item rounded-sm" @click="openLight('https://images.unsplash.com/photo-1611892440504-42a792e24d32?w=1200&q=90','Triple - Detalle')">
+          <img src="https://images.unsplash.com/photo-1611892440504-42a792e24d32?w=400&q=80" alt="Triple detalle" class="w-full h-40 sm:h-52 object-cover" loading="lazy" />
+        </div>
+        <div class="gallery-item rounded-sm" @click="openLight('https://images.unsplash.com/photo-1540518614846-7eded433c457?w=1200&q=90','Triple - Área de descanso')">
+          <img src="https://images.unsplash.com/photo-1540518614846-7eded433c457?w=400&q=80" alt="Triple descanso" class="w-full h-40 sm:h-52 object-cover" loading="lazy" />
+        </div>
+        <div class="gallery-item rounded-sm" @click="openLight('https://images.unsplash.com/photo-1586105251261-72a756497a11?w=1200&q=90','Triple - Baño')">
+          <img src="https://images.unsplash.com/photo-1586105251261-72a756497a11?w=400&q=80" alt="Triple baño" class="w-full h-40 sm:h-52 object-cover" loading="lazy" />
+        </div>
+        <div class="gallery-item rounded-sm" @click="openLight('https://images.unsplash.com/photo-1576013551627-0cc20b96c2a7?w=1200&q=90','Triple - Vista exterior')">
+          <img src="https://images.unsplash.com/photo-1576013551627-0cc20b96c2a7?w=400&q=80" alt="Triple exterior" class="w-full h-40 sm:h-52 object-cover" loading="lazy" />
+        </div>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- ══════════════════════════
+       CTA RESERVA
+  ══════════════════════════ -->
+  <section class="py-20 px-4 bg-forest text-center">
+    <p class="text-gold text-xs tracking-[0.4em] uppercase font-light mb-4">Reservaciones</p>
+    <h2 class="font-serif text-4xl text-white font-semibold mb-4">¿Listo para reservar?</h2>
+    <p class="text-white/60 font-light mb-8 max-w-md mx-auto">Reserva directo con nosotros y obtén la mejor tarifa garantizada.</p>
+    <div class="flex flex-col sm:flex-row items-center justify-center gap-4">
+      <a href="index.html#reservar" class="inline-flex items-center gap-2 bg-gold hover:bg-gold-light text-forest font-semibold text-xs tracking-widest uppercase px-8 py-4 rounded-full transition-colors duration-300 cursor-pointer">
+        Reservar ahora
+      </a>
+      <a href="https://wa.me/521234567890" target="_blank" rel="noopener"
+        class="inline-flex items-center gap-2 border border-white/30 hover:border-gold text-white hover:text-gold text-xs tracking-widest uppercase px-8 py-4 rounded-full transition-all duration-200 cursor-pointer">
+        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+        WhatsApp
+      </a>
+    </div>
+  </section>
+
+
+  <!-- ══════════════════════════
+       FOOTER
+  ══════════════════════════ -->
+  <!-- ── FOOTER (Clean Light style) ── -->
+  <!-- ═══════════════════════════════════════
+       FOOTER (Consistency)
+  ═══════════════════════════════════════ -->
+  <footer class="bg-[#000A1C] pt-20 pb-10 px-4 mt-0 text-white border-t border-white/5 relative z-30">
+    <div class="max-w-7xl mx-auto">
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 mb-16">
+        
+        <!-- Col 1: Brand -->
+        <div class="space-y-6">
+          <img src="Imágenes/Logo Cantarranas - Bco.png" alt="Casa Cantarranas" class="h-16 w-auto object-contain" />
+          <p class="text-white/50 text-sm font-light leading-relaxed max-w-xs">
+            Casa Cantarranas es un refugio de paz y elegancia en el corazón de Tehuacán. Nuestra misión es brindar una experiencia hospitalaria excepcional rodeada de historia y confort.
+          </p>
+          <div class="flex gap-4">
+            <a href="#" class="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center hover:bg-gold hover:text-[#000A1C] transition-all duration-300">
+              <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
+            </a>
+            <a href="#" class="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center hover:bg-gold hover:text-[#000A1C] transition-all duration-300">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></svg>
+            </a>
+          </div>
+        </div>
+
+        <!-- Col 2: Navigation -->
+        <div>
+          <h4 class="text-xs tracking-[0.3em] uppercase font-bold text-gold mb-8">Navegación</h4>
+          <ul class="space-y-4">
+            <li><a href="index.html#inicio"  class="text-white/60 hover:text-gold text-sm font-light transition-colors">Inicio</a></li>
+            <li><a href="index.html#servicios" class="text-white/60 hover:text-gold text-sm font-light transition-colors">Servicios</a></li>
+            <li><a href="habitaciones.html" class="text-white/60 hover:text-gold text-sm font-light transition-colors">Habitaciones</a></li>
+            <li><a href="index.html#restaurante" class="text-white/60 hover:text-gold text-sm font-light transition-colors">Restaurante</a></li>
+            <li><a href="index.html#contacto" class="text-white/60 hover:text-gold text-sm font-light transition-colors">Contacto</a></li>
+          </ul>
+        </div>
+
+        <!-- Col 3: Contact -->
+        <div>
+          <h4 class="text-xs tracking-[0.3em] uppercase font-bold text-gold mb-8">Contacto</h4>
+          <ul class="space-y-5">
+            <li class="flex items-start gap-3">
+              <svg class="w-5 h-5 text-gold flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/></svg>
+              <a href="tel:2382038132" class="text-white/60 hover:text-white text-sm font-light transition-colors">238-203-8132</a>
+            </li>
+            <li class="flex items-start gap-3">
+              <svg class="w-5 h-5 text-gold flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+              <a href="#" class="text-white/60 hover:text-white text-sm font-light transition-colors">WhatsApp</a>
+            </li>
+          </ul>
+        </div>
+
+        <!-- Col 4: Map -->
+        <div>
+          <h4 class="text-xs tracking-[0.3em] uppercase font-bold text-gold mb-8">Ubicación</h4>
+          <div class="rounded-xl overflow-hidden h-40 border border-white/10 shadow-2xl relative group">
+            <iframe 
+              src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d15124.62!2d-97.39!3d18.46!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x85c5bcd462c90c79%3A0x6b4c3e80a0680a6d!2sTehuac%C3%A1n%2C%20Pue.!5e0!3m2!1ses!2smx!4v1711411200000!5m2!1ses!2smx" 
+              class="w-full h-full border-0 grayscale hover:grayscale-0 transition-all duration-700" 
+              allowfullscreen="" loading="lazy"></iframe>
+          </div>
+          <p class="text-white/40 text-[11px] font-light mt-4 flex items-center gap-2">
+            <svg class="w-3 h-3 text-gold" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+            4 Norte 609, Tehuacán, Puebla. México
+          </p>
+        </div>
+      </div>
+
+      <!-- Footer Bottom -->
+      <div class="flex flex-col md:flex-row items-center justify-between gap-6 pt-10 border-t border-white/5">
+        <div class="flex flex-col md:flex-row items-center gap-4 md:gap-8">
+            <p class="text-white/30 text-[11px] font-light tracking-wide italic">© 2026 Casa Cantarranas · Tehuacán, Puebla</p>
+            <a href="#" class="text-white/30 hover:text-gold text-[10px] tracking-widest uppercase font-medium transition-colors cursor-pointer">Aviso de Privacidad</a>
+        </div>
+        <div class="flex items-center gap-6">
+            <a href="admin.html" class="text-white/30 hover:text-gold transition-all group flex items-center gap-2" title="Panel de administración">
+                <span class="text-[9px] uppercase tracking-widest opacity-40 group-hover:opacity-100 transition-opacity">Staff Only</span>
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+            </a>
+            <a href="https://hdimpulsodigital.com/" target="_blank" rel="noopener" class="text-white/20 hover:text-white text-[10px] font-light transition-colors">Hecho por HD Impulso Digital</a>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+
+  <!-- ══════════════════════════
+       LIGHTBOX
+  ══════════════════════════ -->
+  <div
+    x-show="lightbox"
+    x-transition:enter="transition ease-out duration-200"
+    x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
+    x-transition:leave="transition ease-in duration-150"
+    x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0"
+    @click.self="closeLight()"
+    @keydown.escape.window="closeLight()"
+    class="fixed inset-0 z-50 bg-black/90 flex items-center justify-center p-4"
+  >
+    <button @click="closeLight()" class="absolute top-6 right-6 text-white/60 hover:text-white cursor-pointer" aria-label="Cerrar">
+      <svg class="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+    </button>
+    <img :src="lightboxSrc" :alt="lightboxAlt" class="lightbox-img rounded-sm shadow-2xl" />
+    <p class="absolute bottom-8 left-1/2 -translate-x-1/2 text-white/50 text-sm font-light italic" x-text="lightboxAlt"></p>
+  </div>
+
+
+  <script>
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
+    }, { threshold: 0.1 });
+    document.querySelectorAll('.fade-up').forEach(el => observer.observe(el));
+
+    // Lee ?room= de la URL y activa la tab correcta
+    document.addEventListener('alpine:init', () => {
+      const params = new URLSearchParams(window.location.search);
+      const room = params.get('room');
+      if (room) {
+        Alpine.store && Alpine.store('room', room);
+      }
+    });
+    document.addEventListener('DOMContentLoaded', () => {
+      const params = new URLSearchParams(window.location.search);
+      const room = params.get('room');
+      if (room) {
+        setTimeout(() => {
+          const el = document.querySelector('[x-data]');
+          if (el && el._x_dataStack) {
+            el._x_dataStack[0].activeRoom = room;
+          }
+        }, 50);
+      }
+    });
+  </script>
+
+</body>
+</html>

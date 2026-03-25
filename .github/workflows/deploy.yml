@@ -1,0 +1,29 @@
+name: Deploy to CloudPanel
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@master
+        with:
+          host: 5.78.199.41
+          username: hdimpulsodigital-paraisohotel
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            cd htdocs/paraisohotel.hdimpulsodigital.com
+            if [ ! -d ".git" ]; then
+              git clone https://github.com/hermesdda2/paraisoinnhotel.git .
+            else
+              git pull origin main
+            fi
+            npm install --production
+            touch server.js
