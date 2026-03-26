@@ -13,17 +13,17 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Deploy via SSH
-        uses: appleboy/ssh-action@master
+        uses: appleboy/ssh-action@v1.0.3
         with:
           host: 5.78.199.41
-          username: hdimpulsodigital-paraisohotel
+          username: hcantarranas
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
-            cd htdocs/paraisohotel.hdimpulsodigital.com
+            cd htdocs/cantarranas.hdimpulsodigital.com
             if [ ! -d ".git" ]; then
-              git clone https://github.com/hermesdda2/paraisoinnhotel.git .
+              git clone https://github.com/hermesdda2/hcantarranas2.git .
             else
               git pull origin main
             fi
             npm install --production
-            touch server.js
+            pm2 restart hotel-cantarranas || pm2 start server.js --name hotel-cantarranas
