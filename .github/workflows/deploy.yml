@@ -8,6 +8,7 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -18,12 +19,14 @@ jobs:
           host: 5.78.199.41
           username: hcantarranas
           key: ${{ secrets.VPS_SSH_KEY }}
+          port: 22
           script: |
-            cd htdocs/cantarranas.hdimpulsodigital.com
+            cd /home/hdimpulsodigital-cantarranas/htdocs/cantarranas.hdimpulsodigital.com
             if [ ! -d ".git" ]; then
               git clone https://github.com/hermesdda2/hcantarranas2.git .
             else
               git pull origin main
             fi
             npm install --production
-            pm2 restart hotel-cantarranas || pm2 start server.js --name hotel-cantarranas
+            pm2 restart hcantarranas || pm2 start npm --name "hcantarranas" -- start
+            pm2 save
