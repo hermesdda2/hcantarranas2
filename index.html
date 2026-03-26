@@ -96,6 +96,11 @@
       background: rgba(255, 255, 255, 0.95);
       box-shadow: 0 6px 30px rgba(0,0,0,0.1);
     }
+    .nav-floating.is-open {
+      background: rgba(0, 10, 28, 0.98);
+      border-radius: 24px;
+      border: 1px solid rgba(255,255,255,0.1);
+    }
 
     /* Animate on scroll */
     .fade-up {
@@ -188,8 +193,11 @@
   ═══════════════════════════════════════ -->
   <nav
     x-data="{ open: false, scrolled: false }"
-    x-init="window.addEventListener('scroll', () => { scrolled = window.scrollY > 40 })"
-    :class="scrolled ? 'nav-floating scrolled' : 'nav-floating'"
+    x-init="window.addEventListener('scroll', () => { 
+      scrolled = window.scrollY > 40;
+      if (open && window.scrollY > 100) open = false;
+    })"
+    :class="{ 'nav-floating scrolled': scrolled && !open, 'nav-floating is-open': open, 'nav-floating': !scrolled && !open }"
     class="fixed z-50 transition-all duration-400"
   >
     <div class="px-4">
@@ -197,7 +205,9 @@
 
         <!-- Logo -->
         <a href="#inicio" class="flex flex-col leading-none cursor-pointer">
-          <img src="Imágenes/Logo Hotel Cantarranas - Horizongtal.png" alt="Hotel Cantarranas" class="h-10 sm:h-11 w-auto object-contain" />
+          <img :src="open ? 'Imágenes/Logo Cantarranas - Bco.png' : 'Imágenes/Logo Hotel Cantarranas - Horizongtal.png'" 
+               alt="Hotel Cantarranas" 
+               class="h-10 sm:h-11 w-auto object-contain transition-all duration-300" />
         </a>
 
         <!-- Desktop menu -->
@@ -224,7 +234,7 @@
         </div>
 
         <!-- Mobile hamburger -->
-        <button @click="open = !open" class="md:hidden text-[#000A1C] p-2 cursor-pointer" aria-label="Abrir menú">
+        <button @click="open = !open" class="md:hidden p-2 cursor-pointer transition-colors" :class="open ? 'text-white' : 'text-[#000A1C]'" aria-label="Abrir menú">
           <svg x-show="!open" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
           <svg x-show="open" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
         </button>
@@ -232,13 +242,20 @@
     </div>
 
     <!-- Mobile menu -->
-    <div x-show="open" x-transition class="md:hidden bg-forest/95 rounded-3xl mt-2 mx-4 p-6 space-y-4 shadow-2xl border border-white/10">
-      <a href="#servicios"     @click="open=false" class="block text-white/80 hover:text-gold text-sm tracking-widest uppercase font-medium cursor-pointer">Servicios</a>
-      <a href="#habitaciones"  @click="open=false" class="block text-white/80 hover:text-gold text-sm tracking-widest uppercase font-medium cursor-pointer">Habitaciones</a>
-      <a href="#restaurante"   @click="open=false" class="block text-white/80 hover:text-gold text-sm tracking-widest uppercase font-medium cursor-pointer">Restaurante</a>
-      <a href="#tours"         @click="open=false" class="block text-white/80 hover:text-gold text-sm tracking-widest uppercase font-medium cursor-pointer">Tours</a>
-      <a href="#contacto"      @click="open=false" class="block text-white/80 hover:text-gold text-sm tracking-widest uppercase font-medium cursor-pointer">Contacto</a>
-      <a href="#reservar"      @click="open=false" class="inline-block w-full text-center bg-gold text-[#000A1C] text-xs font-bold tracking-widest uppercase px-6 py-4 mt-2 cursor-pointer rounded-xl">Reservar Ahora</a>
+    <div x-show="open" 
+         x-transition:enter="transition ease-out duration-300"
+         x-transition:enter-start="opacity-0 -translate-y-4"
+         x-transition:enter-end="opacity-100 translate-y-0"
+         class="md:hidden px-4 pb-8 space-y-6">
+      <div class="h-px bg-white/10 mb-6"></div>
+      <a href="#servicios"     @click="open=false" class="block text-white/80 hover:text-gold text-lg tracking-widest uppercase font-medium cursor-pointer">Servicios</a>
+      <a href="#habitaciones"  @click="open=false" class="block text-white/80 hover:text-gold text-lg tracking-widest uppercase font-medium cursor-pointer">Habitaciones</a>
+      <a href="#restaurante"   @click="open=false" class="block text-white/80 hover:text-gold text-lg tracking-widest uppercase font-medium cursor-pointer">Restaurante</a>
+      <a href="#tours"         @click="open=false" class="block text-white/80 hover:text-gold text-lg tracking-widest uppercase font-medium cursor-pointer">Tours</a>
+      <a href="#contacto"      @click="open=false" class="block text-white/80 hover:text-gold text-lg tracking-widest uppercase font-medium cursor-pointer">Contacto</a>
+      <div class="pt-4">
+        <a href="#reservar"    @click="open=false" class="inline-block w-full text-center bg-gold text-[#000A1C] text-sm font-bold tracking-widest uppercase px-6 py-4 cursor-pointer rounded-xl">Reservar Ahora</a>
+      </div>
     </div>
   </nav>
 
@@ -1402,35 +1419,38 @@
           </div>
         </div>
 
-        <!-- Col 2: Navigation -->
-        <div>
-          <h4 class="text-xs tracking-[0.3em] uppercase font-bold text-gold mb-8">Navegación</h4>
-          <ul class="space-y-4">
-            <li><a href="#inicio"  class="text-white/60 hover:text-gold text-sm font-light transition-colors">Inicio</a></li>
-            <li><a href="#servicios" class="text-white/60 hover:text-gold text-sm font-light transition-colors">Servicios</a></li>
-            <li><a href="#habitaciones" class="text-white/60 hover:text-gold text-sm font-light transition-colors">Habitaciones</a></li>
-            <li><a href="#restaurante" class="text-white/60 hover:text-gold text-sm font-light transition-colors">Restaurante</a></li>
-            <li><a href="#contacto" class="text-white/60 hover:text-gold text-sm font-light transition-colors">Contacto</a></li>
-          </ul>
-        </div>
+        <!-- Cols 2 & 3: Navigation & Contact (Side by side on mobile) -->
+        <div class="grid grid-cols-2 gap-8 md:col-span-2 lg:contents">
+          <!-- Col 2: Navigation -->
+          <div>
+            <h4 class="text-xs tracking-[0.3em] uppercase font-bold text-gold mb-8">Navegación</h4>
+            <ul class="space-y-4">
+              <li><a href="#inicio"  class="text-white/60 hover:text-gold text-sm font-light transition-colors">Inicio</a></li>
+              <li><a href="#servicios" class="text-white/60 hover:text-gold text-sm font-light transition-colors">Servicios</a></li>
+              <li><a href="#habitaciones" class="text-white/60 hover:text-gold text-sm font-light transition-colors">Habitaciones</a></li>
+              <li><a href="#restaurante" class="text-white/60 hover:text-gold text-sm font-light transition-colors">Restaurante</a></li>
+              <li><a href="#contacto" class="text-white/60 hover:text-gold text-sm font-light transition-colors">Contacto</a></li>
+            </ul>
+          </div>
 
-        <!-- Col 3: Contact -->
-        <div>
-          <h4 class="text-xs tracking-[0.3em] uppercase font-bold text-gold mb-8">Contacto</h4>
-          <ul class="space-y-5">
-            <li class="flex items-start gap-3">
-              <svg class="w-5 h-5 text-gold flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/></svg>
-              <a href="tel:2382038132" class="text-white/60 hover:text-white text-sm font-light transition-colors">238-203-8132</a>
-            </li>
-            <li class="flex items-start gap-3">
-              <svg class="w-5 h-5 text-gold flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
-              <a href="#" class="text-white/60 hover:text-white text-sm font-light transition-colors">WhatsApp</a>
-            </li>
-            <li class="flex items-start gap-3">
-              <svg class="w-5 h-5 text-gold flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
-              <a href="mailto:reservas@hotelcantarranas.com" class="text-white/60 hover:text-white text-sm font-light transition-colors truncate">reservas@hotelcantarranas.com</a>
-            </li>
-          </ul>
+          <!-- Col 3: Contact -->
+          <div>
+            <h4 class="text-xs tracking-[0.3em] uppercase font-bold text-gold mb-8">Contacto</h4>
+            <ul class="space-y-5">
+              <li class="flex items-start gap-3">
+                <svg class="w-5 h-5 text-gold flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/></svg>
+                <a href="tel:2382038132" class="text-white/60 hover:text-white text-sm font-light transition-colors">238-203-8132</a>
+              </li>
+              <li class="flex items-start gap-3">
+                <svg class="w-5 h-5 text-gold flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+                <a href="#" class="text-white/60 hover:text-white text-sm font-light transition-colors">WhatsApp</a>
+              </li>
+              <li class="flex items-start gap-3">
+                <svg class="w-5 h-5 text-gold flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+                <a href="mailto:reservas@hotelcantarranas.com" class="text-white/60 hover:text-white text-sm font-light transition-colors truncate">reservas@hotelcantarranas.com</a>
+              </li>
+            </ul>
+          </div>
         </div>
 
         <!-- Col 4: Map -->
